@@ -526,3 +526,335 @@
   .badge-grid { grid-template-columns: 1fr; }
   .achievement-card p { min-height: 0; }
 }
+
+html[data-theme='dark'] .topbar {
+  border-color: var(--line);
+  background: rgb(20 27 22 / 92%);
+}
+html[data-theme='dark'] .mobile-nav {
+  border-color: var(--line);
+  background: rgb(30 40 33 / 96%);
+}
+html[data-theme='dark'] .icon-button,
+html[data-theme='dark'] .date-pill,
+html[data-theme='dark'] .range-select,
+html[data-theme='dark'] .workout-mode-toggle,
+html[data-theme='dark'] .diet-filter-group,
+html[data-theme='dark'] .profile-dialog,
+html[data-theme='dark'] .profile-cancel,
+html[data-theme='dark'] .tracker-secondary-button,
+html[data-theme='dark'] .workout-day-button,
+html[data-theme='dark'] .exercise-card,
+html[data-theme='dark'] .habit-row,
+html[data-theme='dark'] .diet-meal-card,
+html[data-theme='dark'] .diet-meal-select,
+html[data-theme='dark'] .fitness-profile-item,
+html[data-theme='dark'] .progress-metric-card {
+  border-color: var(--line);
+  color: var(--ink);
+  background-color: var(--surface);
+}
+html[data-theme='dark'] .stat-card,
+html[data-theme='dark'] .panel {
+  border-color: var(--line);
+}
+html[data-theme='dark'] .workout-card,
+html[data-theme='dark'] .water-card,
+html[data-theme='dark'] .workout-day-button.selected,
+html[data-theme='dark'] .exercise-card.completed,
+html[data-theme='dark'] .rest-day-card,
+html[data-theme='dark'] .habit-row.completed,
+html[data-theme='dark'] .diet-meal-card.selected,
+html[data-theme='dark'] .bmi-result,
+html[data-theme='dark'] .progress-profile-card,
+html[data-theme='dark'] .rewards-intro,
+html[data-theme='dark'] .achievement-card.earned,
+html[data-theme='dark'] .diet-calorie-summary {
+  border-color: #3a5541;
+  background: #202e24;
+}
+html[data-theme='dark'] .workout-day-button:hover,
+html[data-theme='dark'] .exercise-card:hover,
+html[data-theme='dark'] .habit-row:hover,
+html[data-theme='dark'] .diet-meal-card:hover,
+html[data-theme='dark'] .profile-cancel:hover,
+html[data-theme='dark'] .tracker-secondary-button:hover:not(:disabled),
+html[data-theme='dark'] .icon-button:hover {
+  border-color: #54745b;
+  background-color: #28382c;
+}
+html[data-theme='dark'] .profile-dialog-heading,
+html[data-theme='dark'] .profile-form-actions,
+html[data-theme='dark'] .workout-session-heading,
+html[data-theme='dark'] .bmi-save-row,
+html[data-theme='dark'] .summary-item,
+html[data-theme='dark'] .user-mini {
+  border-color: var(--line);
+}
+html[data-theme='dark'] .profile-field input,
+html[data-theme='dark'] .profile-field select,
+html[data-theme='dark'] .bmi-input-wrap input {
+  border-color: #46564a;
+  color: var(--ink);
+  background: #17211a;
+}
+html[data-theme='dark'] .profile-field input::placeholder,
+html[data-theme='dark'] .bmi-input-wrap input::placeholder {
+  color: #9aa99e;
+}
+html[data-theme='dark'] .workout-mode-toggle button:hover,
+html[data-theme='dark'] .diet-filter-group button:hover {
+  color: #a3d8ad;
+  background: #28382c;
+}
+html[data-theme='dark'] .workout-mode-toggle button.active,
+html[data-theme='dark'] .diet-filter-group button.active,
+html[data-theme='dark'] .profile-save,
+html[data-theme='dark'] .habit-row.completed .habit-check,
+html[data-theme='dark'] .exercise-check[aria-pressed="true"] {
+  color: #fff;
+  background: #34734a;
+}
+html[data-theme='dark'] .exercise-check,
+html[data-theme='dark'] .habit-check,
+html[data-theme='dark'] .profile-edit-button {
+  border-color: #46564a;
+  color: #d3e2d6;
+  background: #202b23;
+}
+html[data-theme='dark'] .profile-edit-button:hover {
+  background: #304337;
+}
+html[data-theme='dark'] .mobile-brand,
+html[data-theme='dark'] .breadcrumb strong,
+html[data-theme='dark'] .stat-value,
+html[data-theme='dark'] .panel-heading h2,
+html[data-theme='dark'] .summary-copy strong,
+html[data-theme='dark'] .summary-value,
+html[data-theme='dark'] .workout-info strong,
+html[data-theme='dark'] .water-copy strong,
+html[data-theme='dark'] .profile-dialog-heading h2,
+html[data-theme='dark'] .workout-section-heading h2,
+html[data-theme='dark'] .workout-day-number,
+html[data-theme='dark'] .workout-day-focus,
+html[data-theme='dark'] .workout-session-title h2,
+html[data-theme='dark'] .workout-progress-label strong,
+html[data-theme='dark'] .exercise-details h3,
+html[data-theme='dark'] .rest-day-card strong,
+html[data-theme='dark'] .diet-calorie-summary strong,
+html[data-theme='dark'] .diet-category-heading h2,
+html[data-theme='dark'] .diet-meal-name,
+html[data-theme='dark'] .bmi-section-heading h2,
+html[data-theme='dark'] .bmi-result strong,
+html[data-theme='dark'] .bmi-range-heading strong,
+html[data-theme='dark'] .fitness-profile-item strong,
+html[data-theme='dark'] .tracker-panel-heading h2,
+html[data-theme='dark'] .water-total-row strong,
+html[data-theme='dark'] .water-add-label,
+html[data-theme='dark'] .habit-row-copy strong,
+html[data-theme='dark'] .progress-metric-value,
+html[data-theme='dark'] .progress-profile-card strong,
+html[data-theme='dark'] .progress-panel-heading h2,
+html[data-theme='dark'] .weight-snapshot strong,
+html[data-theme='dark'] .rewards-intro strong,
+html[data-theme='dark'] .achievement-card h2 {
+  color: #e6eee8;
+}
+html[data-theme='dark'] .welcome-row h1 span,
+html[data-theme='dark'] .workout-day-button.is-today .workout-day-name,
+html[data-theme='dark'] .workout-day-button.is-done .workout-day-status,
+html[data-theme='dark'] .habit-progress-label strong,
+html[data-theme='dark'] .achievement-pending {
+  color: #91d19f;
+}
+html[data-theme='dark'] .breadcrumb,
+html[data-theme='dark'] .date-label,
+html[data-theme='dark'] .stat-top,
+html[data-theme='dark'] .stat-unit,
+html[data-theme='dark'] .stat-foot,
+html[data-theme='dark'] .panel-heading p,
+html[data-theme='dark'] .chart-legend,
+html[data-theme='dark'] .summary-copy span,
+html[data-theme='dark'] .workout-info span,
+html[data-theme='dark'] .water-copy span,
+html[data-theme='dark'] .workout-section-heading p,
+html[data-theme='dark'] .workout-day-name,
+html[data-theme='dark'] .workout-day-status,
+html[data-theme='dark'] .workout-session-title p:last-child,
+html[data-theme='dark'] .workout-duration,
+html[data-theme='dark'] .workout-progress-label,
+html[data-theme='dark'] .exercise-details p,
+html[data-theme='dark'] .rest-day-card p,
+html[data-theme='dark'] .diet-calorie-summary small,
+html[data-theme='dark'] .diet-calorie-summary em,
+html[data-theme='dark'] .diet-category-heading p,
+html[data-theme='dark'] .diet-meal-description,
+html[data-theme='dark'] .diet-meal-meta,
+html[data-theme='dark'] .diet-meal-meta > span:last-child,
+html[data-theme='dark'] .diet-planner-toolbar > p,
+html[data-theme='dark'] .bmi-section-heading p,
+html[data-theme='dark'] .bmi-field,
+html[data-theme='dark'] .bmi-input-wrap > span,
+html[data-theme='dark'] .bmi-field > small,
+html[data-theme='dark'] .bmi-result-label,
+html[data-theme='dark'] .bmi-range-heading span,
+html[data-theme='dark'] .bmi-range-labels,
+html[data-theme='dark'] .bmi-range-legend span,
+html[data-theme='dark'] .bmi-save-row p,
+html[data-theme='dark'] .bmi-disclaimer,
+html[data-theme='dark'] .fitness-profile-item small,
+html[data-theme='dark'] .fitness-profile-hint,
+html[data-theme='dark'] .tracker-panel-heading p:last-child,
+html[data-theme='dark'] .water-total-row > div span,
+html[data-theme='dark'] .water-remaining,
+html[data-theme='dark'] .habit-progress-label,
+html[data-theme='dark'] .habit-row-copy small,
+html[data-theme='dark'] .progress-metric-top,
+html[data-theme='dark'] .progress-metric-card p,
+html[data-theme='dark'] .progress-profile-card small,
+html[data-theme='dark'] .progress-profile-card strong em,
+html[data-theme='dark'] .progress-panel-heading p,
+html[data-theme='dark'] .activity-chart-label,
+html[data-theme='dark'] .progress-chart-note,
+html[data-theme='dark'] .weight-snapshot span,
+html[data-theme='dark'] .weight-scale-start,
+html[data-theme='dark'] .weight-scale-end,
+html[data-theme='dark'] .rewards-intro p,
+html[data-theme='dark'] .achievement-card p,
+html[data-theme='dark'] .rewards-storage-note,
+html[data-theme='dark'] .page-content > .eyebrow {
+  color: #a8b6ac;
+}
+html[data-theme='dark'] .nav-link.active,
+html[data-theme='dark'] .mobile-nav a.active {
+  color: #b4e2bc;
+}
+html[data-theme='dark'] .text-action,
+html[data-theme='dark'] .preview-note,
+html[data-theme='dark'] .workout-week-badge,
+html[data-theme='dark'] .diet-picked-badge,
+html[data-theme='dark'] .diet-food-label,
+html[data-theme='dark'] .bmi-save-button,
+html[data-theme='dark'] .habit-percent-badge,
+html[data-theme='dark'] .progress-profile-tag,
+html[data-theme='dark'] .achievement-status.earned {
+  color: #a7d8af;
+  background: #263a2b;
+}
+html[data-theme='dark'] .text-action:hover {
+  background: #304a35;
+}
+html[data-theme='dark'] .stat-icon,
+html[data-theme='dark'] .summary-icon,
+html[data-theme='dark'] .workout-session-icon,
+html[data-theme='dark'] .bmi-heading-mark,
+html[data-theme='dark'] .bmi-section-icon,
+html[data-theme='dark'] .habit-feature-icon,
+html[data-theme='dark'] .progress-metric-icon,
+html[data-theme='dark'] .progress-profile-icon,
+html[data-theme='dark'] .progress-panel-icon,
+html[data-theme='dark'] .achievement-icon {
+  color: #9dd5a9;
+  background: #263a2b;
+}
+html[data-theme='dark'] .workout-progress-track,
+html[data-theme='dark'] .tracker-progress-track,
+html[data-theme='dark'] .water-track,
+html[data-theme='dark'] .activity-chart-column {
+  background: #303c33;
+}
+html[data-theme='dark'] .activity-chart-day.completed .activity-chart-column,
+html[data-theme='dark'] .activity-chart-bar {
+  background: #354a38;
+}
+html[data-theme='dark'] .progress-profile-tag,
+html[data-theme='dark'] .achievement-status,
+html[data-theme='dark'] .bmi-category-badge {
+  border-color: #3b4a3e;
+}
+html[data-theme='dark'] .achievement-status,
+html[data-theme='dark'] .bmi-category-badge {
+  color: #c0ccc3;
+  background: #303a33;
+}
+html[data-theme='dark'] .achievement-card.locked .achievement-icon {
+  color: #aab6ad;
+  background: #303a33;
+}
+html[data-theme='dark'] .bmi-result.underweight .bmi-category-badge,
+html[data-theme='dark'] .bmi-result.normal .bmi-category-badge,
+html[data-theme='dark'] .bmi-result.overweight .bmi-category-badge,
+html[data-theme='dark'] .bmi-result.obese .bmi-category-badge {
+  color: #d0ded3;
+  background: #303a33;
+}
+html[data-theme='dark'] .diet-food-label.non-veg {
+  color: #e4a393;
+  background: #422d29;
+}
+html[data-theme='dark'] .water-icon,
+html[data-theme='dark'] .water-feature-icon,
+html[data-theme='dark'] .progress-metric-icon.water {
+  color: #9bcbd3;
+  background: #26383b;
+}
+html[data-theme='dark'] .exercise-number,
+html[data-theme='dark'] .diet-meal-type-mark {
+  border-color: #3b5942;
+  color: #a5d6af;
+  background: #263a2b;
+}
+html[data-theme='dark'] .diet-meal-type-mark.non-veg {
+  border-color: #64433b;
+  color: #e4a393;
+  background: #422d29;
+}
+html[data-theme='dark'] .bmi-range-marker {
+  border-color: #1e2821;
+  background: #d6e5d9;
+}
+html[data-theme='dark'] .bmi-range-marker::before {
+  border-color: #1e2821;
+  background: #d6e5d9;
+}
+html[data-theme='dark'] .profile-topbar-button {
+  color: #a7d8af;
+}
+html[data-theme='dark'] .stat-foot .positive,
+html[data-theme='dark'] .workout-info small,
+html[data-theme='dark'] .workout-progress-label b,
+html[data-theme='dark'] .exercise-meta span,
+html[data-theme='dark'] .water-percent,
+html[data-theme='dark'] .water-goal-label,
+html[data-theme='dark'] .day-dot.today {
+  color: #9bd3a5;
+}
+html[data-theme='dark'] .water-add-button {
+  border-color: #3e5b61;
+  color: #a2d4dc;
+  background: #26383b;
+}
+html[data-theme='dark'] .water-add-button:hover {
+  border-color: #5a858b;
+  background: #2e4447;
+}
+html[data-theme='dark'] .day-dot span {
+  color: #a7d8af;
+  background: #263a2b;
+}
+html[data-theme='dark'] .day-dot.done span {
+  color: #fff;
+  background: #4a8960;
+}
+html[data-theme='dark'] .bmi-field > .bmi-field-error {
+  color: #ef9b8e;
+}
+html[data-theme='dark'] .bmi-save-button:disabled {
+  border-color: #3c473e;
+  color: #9aa99e;
+  background: #263029;
+}
+html[data-theme='dark'] .habit-row-icon {
+  color: #a7d8af;
+  background: #263a2b;
+}
