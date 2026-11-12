@@ -1,0 +1,71 @@
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, Droplets, Dumbbell, Flame, House, Leaf, Pencil, Scale, Trophy } from 'lucide-react'
+import { useCallback, useRef, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useAppData } from '../hooks/useAppData.js'
+import ProfileEditor from '../components/ProfileEditor.jsx'
+import { formatToday } from '../utils/date.js'
+
+const navigation = [
+  { label: 'Overview', path: '/', icon: House },
+  { label: 'Workouts', path: '/workouts', icon: Dumbbell },
+  { label: 'Nutrition', path: '/nutrition', icon: Leaf },
+  { label: 'BMI & profile', path: '/bmi-profile', icon: Scale },
+  { label: 'Progress', path: '/progress', icon: ChartNoAxesCombined },
+  { label: 'Water & habits', path: '/habits', icon: Droplets },
+  { label: 'Rewards', path: '/rewards', icon: Trophy },
+]
+
+const currentTitle = (pathname) => navigation.find((item) => item.path === pathname)?.label ?? 'Overview'
+
+function BrandMark() {
+  return <span className="brand-mark" aria-hidden="true"><Activity size={19} strokeWidth={2.2} /></span>
+}
+
+export default function AppLayout() {
+  const { pathname } = useLocation()
+  const { profile, updateProfile } = useAppData()
+  const [isProfileEditorOpen, setProfileEditorOpen] = useState(false)
+  const profileTriggerRef = useRef(null)
+  const openProfileEditor = useCallback((event) => {
+    profileTriggerRef.current = event.currentTarget
+    setProfileEditorOpen(true)
+  }, [])
+  const closeProfileEditor = useCallback(() => {
+    setProfileEditorOpen(false)
+    window.requestAnimationFrame(() => profileTriggerRef.current?.focus())
+  }, [])
+  const saveProfile = useCallback((nextProfile) => {
+    updateProfile(nextProfile)
+    closeProfileEditor()
+  }, [closeProfileEditor, updateProfile])
+  const initials = profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar" aria-label="Main navigation">
+        <NavLink className="brand" to="/" aria-label="FitLife overview"><BrandMark /><span className="brand-name">fit<span>life</span></span></NavLink>
+        <p className="nav-section-label">Your space</p>
+        <nav className="side-nav">
+          {navigation.map(({ label, path, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}><Icon size={17} strokeWidth={1.8} /><span>{label}</span></NavLink>)}
+        </nav>
+        <div className="sidebar-spacer" />
+        <div className="sidebar-tip"><div className="tip-icon"><Flame size={16} /></div><strong>Keep your rhythm</strong><p>Consistency is built one small choice at a time.</p></div>
+        <div className="user-mini"><span className="avatar">{initials}</span><span className="user-mini-copy"><strong>{profile.name}</strong><small>{profile.goal}</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
+      </aside>
+
+      <main className="main-area">
+        <header className="topbar">
+          <NavLink className="mobile-brand" to="/" aria-label="FitLife overview"><BrandMark />fitlife</NavLink>
+          <div className="breadcrumb">Workspace <span aria-hidden="true"> / </span> <strong>{currentTitle(pathname)}</strong></div>
+          <div className="topbar-actions"><span className="date-label"><CalendarDays size={14} /> {formatToday()}</span><span className="icon-button" aria-hidden="true"><Bell size={16} /></span><button className="icon-button profile-topbar-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={15} /></button></div>
+        </header>
+        <Outlet />
+      </main>
+
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        {navigation.map(({ label, path, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} strokeWidth={1.8} /><span>{label === 'Water & habits' ? 'Habits' : label === 'BMI & profile' ? 'BMI' : label}</span></NavLink>)}
+      </nav>
+      {isProfileEditorOpen && <ProfileEditor profile={profile} onSave={saveProfile} onClose={closeProfileEditor} />}
+    </div>
+  )
+}
