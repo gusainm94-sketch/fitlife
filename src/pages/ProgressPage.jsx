@@ -1,4 +1,4 @@
-import { Activity, Check, Droplets, Scale, Weight } from 'lucide-react'
+import { Activity, Check, Droplets, Flame, Scale, Weight } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
 import { DEFAULT_PROFILE } from '../data/profile.js'
 import { useDailyRecord } from '../hooks/useDailyRecord.js'
@@ -13,8 +13,9 @@ import {
   isWaterIntake,
 } from '../data/dailyTrackers.js'
 import { calculateBMI, getBMICategory } from '../utils/bmi.js'
-import { formatToday } from '../utils/date.js'
-import { getWorkoutProgress } from '../utils/progress.js'
+import { formatDateKey, formatToday, getTodayKey } from '../utils/date.js'
+import { readLocalJsonEntries } from '../utils/localStorage.js'
+import { buildDailyProgressRecords, getProgressPeriodSummary, getWeekId, getWorkoutProgress } from '../utils/progress.js'
 
 function ProgressBar({ label, value, detail, icon: Icon, tone = '' }) {
   return (
@@ -58,9 +59,22 @@ function WeightVisualization({ weight, isSampleProfile }) {
 
 export default function ProgressPage() {
   const { profile, workoutProgress } = useAppData()
-  const { data: water } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
-  const { data: habits } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
+  const { data: water, history: waterHistory } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
+  const { data: habits, history: habitHistory } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
   const workouts = getWorkoutProgress(workoutProgress)
+  const todayKey = getTodayKey()
+  const progressRecords = buildDailyProgressRecords({
+    waterHistory,
+    habitHistory,
+    mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
+    workoutProgress,
+  })
+  const weekStart = getWeekId()
+  const monthStart = `${todayKey.slice(0, 7)}-01`
+  const weeklySummary = getProgressPeriodSummary(progressRecords, weekStart, todayKey)
+  const monthlySummary = getProgressPeriodSummary(progressRecords, monthStart, todayKey)
+  const currentRecord = progressRecords.find(({ date }) => date === todayKey)
+  const historyRows = [...progressRecords].reverse()
   const habitCount = DAILY_HABITS.filter(({ id }) => habits[id]).length
   const habitPercent = Math.round((habitCount / DAILY_HABITS.length) * 100)
   const waterPercent = Math.min(100, Math.round((water.totalMl / DAILY_WATER_GOAL_ML) * 100))
@@ -77,9 +91,14 @@ export default function ProgressPage() {
 
       <section className="progress-metric-grid" aria-label="Daily and weekly progress">
         <ProgressBar label="Daily workout" value={workouts.dailyPercent === null ? 'Rest day' : `${workouts.dailyPercent}%`} detail={workouts.dailyPercent === null ? 'No workout is planned for today' : 'Best completion across your gym or home plan today'} icon={Activity} />
-        <ProgressBar label="Weekly workouts" value={`${workouts.completedDays} / ${workouts.plannedDays}`} detail={`${workouts.completedSessions} completed session${workouts.completedSessions === 1 ? '' : 's'} recorded this week`} icon={Check} />
+        <ProgressBar label="Weekly workouts" value={`${workouts.completedDays} / ${workouts.plannedDays}`} detail={`${weeklySummary.completedWorkouts} completed workout${weeklySummary.completedWorkouts === 1 ? '' : 's'} from saved records`} icon={Check} />
         <ProgressBar label="Daily habits" value={`${habitCount} / ${DAILY_HABITS.length}`} detail={`${habitPercent}% of today's habits completed`} icon={Check} tone="habit" />
         <ProgressBar label="Water intake" value={`${waterPercent}%`} detail={`${water.totalMl.toLocaleString()} of ${DAILY_WATER_GOAL_ML.toLocaleString()} ml today`} icon={Droplets} tone="water" />
+      </section>
+
+      <section className="progress-metric-grid period-summary-grid" aria-label="Historical progress summaries">
+        <ProgressBar label="This week · tracked days" value={weeklySummary.trackedDays} detail={`${weeklySummary.caloriesConsumedKcal.toLocaleString()} estimated meal kcal · ${weeklySummary.averageWaterMl.toLocaleString()} ml average water`} icon={Activity} />
+        <ProgressBar label="This month · tracked days" value={monthlySummary.trackedDays} detail={`${monthlySummary.completedWorkouts} completed workouts · ${monthlySummary.averageHabitPercent}% average habit completion`} icon={Flame} />
       </section>
 
       <section className="progress-profile-row" aria-label="Current profile measurements">
@@ -91,6 +110,31 @@ export default function ProgressPage() {
         <WeeklyActivityChart activityByDay={workouts.activityByDay} />
         <WeightVisualization weight={profile.weight} isSampleProfile={isSampleProfile} />
       </div>
+
+      <section className="panel progress-history-panel" aria-labelledby="daily-history-title">
+        <div className="progress-panel-heading"><div><h2 id="daily-history-title">Daily history</h2><p>Saved days only. No activity is inferred for dates without a record.</p></div><span className="progress-panel-icon"><Activity size={17} /></span></div>
+        {historyRows.length ? (
+          <div className="progress-history-scroll">
+            <table className="progress-history-table">
+              <thead><tr><th>Date</th><th>Meal estimate</th><th>Calories burned</th><th>Exercises</th><th>Workout</th><th>Water</th><th>Habits</th><th>Goals</th></tr></thead>
+              <tbody>{historyRows.map((row) => (
+                <tr key={row.date}>
+                  <th scope="row">{formatDateKey(row.date)}</th>
+                  <td>{row.caloriesConsumedKcal.toLocaleString()} kcal</td>
+                  <td>{row.caloriesBurnedKcal.toLocaleString()} kcal</td>
+                  <td>{row.completedExercises}/{row.totalExercises}</td>
+                  <td>{row.completedWorkout ? 'Complete' : `${row.workoutPercent}%`}</td>
+                  <td>{row.waterMl.toLocaleString()} ml</td>
+                  <td>{row.completedHabits}/{row.totalHabits}</td>
+                  <td>{row.completedGoals}/2</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        ) : <p className="progress-history-empty">Your saved daily records will appear here as you use FitLife.</p>}
+        <p className="progress-chart-note">Meal calories are estimates from selected meals. Calories burned remain zero because the app has no manual or calculated burn-estimate source and does not infer them automatically.</p>
+        <span className="visually-hidden">{currentRecord ? `Today's recorded meal estimate is ${currentRecord.caloriesConsumedKcal} kcal.` : 'No progress record is saved for today.'}</span>
+      </section>
     </div>
   )
 }

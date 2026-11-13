@@ -1,11 +1,12 @@
-import { Activity, Bell, CalendarDays, ChartNoAxesCombined, Droplets, Dumbbell, Flame, House, Leaf, LogOut, Moon, Pencil, Scale, Sun, Trophy } from 'lucide-react'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CreditCard, Droplets, Dumbbell, Flame, House, Leaf, LogOut, Moon, Pencil, Scale, Sun, Trophy } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
 import { useAuth } from '../hooks/useAuth.js'
 import ProfileEditor from '../components/ProfileEditor.jsx'
 import { formatToday } from '../utils/date.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
+import { useMembership } from '../hooks/useMembership.js'
 
 const THEME_STORAGE_KEY = 'fitlife.theme'
 
@@ -17,6 +18,7 @@ const navigation = [
   { label: 'Progress', path: '/progress', icon: ChartNoAxesCombined },
   { label: 'Water & habits', path: '/habits', icon: Droplets },
   { label: 'Rewards', path: '/rewards', icon: Trophy },
+  { label: 'Membership', path: '/membership', icon: CreditCard },
 ]
 
 const currentTitle = (pathname) => navigation.find((item) => item.path === pathname)?.label ?? 'Overview'
@@ -30,13 +32,27 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const { profile, updateProfile } = useAppData()
+  const { membership } = useMembership()
   const [theme, setTheme] = useState(() => readLocalJson(THEME_STORAGE_KEY, 'light') === 'dark' ? 'dark' : 'light')
   const [isProfileEditorOpen, setProfileEditorOpen] = useState(false)
+  const [, refreshCalendarDate] = useState(0)
   const profileTriggerRef = useRef(null)
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme
     writeLocalJson(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    const refresh = () => refreshCalendarDate((current) => current + 1)
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', refresh)
+    window.addEventListener('pageshow', refresh)
+    return () => {
+      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('pageshow', refresh)
+    }
+  }, [])
   const openProfileEditor = useCallback((event) => {
     profileTriggerRef.current = event.currentTarget
     setProfileEditorOpen(true)
@@ -65,7 +81,7 @@ export default function AppLayout() {
         </nav>
         <div className="sidebar-spacer" />
         <div className="sidebar-tip"><div className="tip-icon"><Flame size={16} /></div><strong>Keep your rhythm</strong><p>Consistency is built one small choice at a time.</p></div>
-        <div className="user-mini"><span className="avatar">{initials}</span><span className="user-mini-copy"><strong>{profile.name}</strong><small>{profile.goal}</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
+        <div className="user-mini"><span className="avatar">{initials}</span><span className="user-mini-copy"><strong>{profile.name}</strong><small>{membership.plan} membership</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
       </aside>
 
       <main className="main-area">
@@ -78,7 +94,7 @@ export default function AppLayout() {
       </main>
 
       <nav className="mobile-nav" aria-label="Mobile navigation">
-        {navigation.map(({ label, path, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} strokeWidth={1.8} /><span>{label === 'Water & habits' ? 'Habits' : label === 'BMI & profile' ? 'BMI' : label}</span></NavLink>)}
+        {navigation.map(({ label, path, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} strokeWidth={1.8} /><span>{label === 'Water & habits' ? 'Habits' : label === 'BMI & profile' ? 'BMI' : label === 'Membership' ? 'Plan' : label}</span></NavLink>)}
       </nav>
       {isProfileEditorOpen && <ProfileEditor profile={profile} onSave={saveProfile} onClose={closeProfileEditor} />}
     </div>

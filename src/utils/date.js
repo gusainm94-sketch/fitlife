@@ -13,3 +13,9 @@ export function getTodayKey(date = new Date()) {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+export function formatDateKey(dateKey, options = {}) {
+  const [year, month, day] = dateKey.split('-').map(Number)
+  return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', ...options })
+    .format(new Date(year, month - 1, day))
+}

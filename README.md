@@ -8,7 +8,9 @@ Install dependencies with `npm install`, start the development server with `npm 
 
 ## Current stage
 
-The dashboard's activity metrics are illustrative and are not recorded activity. Profile details, workout checkmarks, meal selections, daily water and habit records, and earned badges are saved in browser Local Storage separately for each local demo account. The frontend-only account system does not provide production authentication, backend services, or account sync. Weight history is not available because historical weigh-ins are not collected.
+Dashboard and progress metrics use saved workout checkmarks, meal selections, water intake, and habit records. Meal calories are estimates from selected meals, not confirmed food consumption. FitLife does not automatically measure or estimate calories burned, so that value remains zero until a burn estimate source is added. Profile details, workout checkmarks, meal selections, daily water and habit records, memberships, and earned badges are saved in browser Local Storage separately for each local demo account. The frontend-only account system does not provide production authentication, backend services, or account sync. Weight history is not available because historical weigh-ins are not collected.
+
+Daily water and habit values retain their existing account-scoped storage keys and are additionally archived by local calendar date under matching `.history.v1` keys. The latest legacy daily record is preserved when a new date is first saved; gaps are not backfilled. Date-keyed meal plans and weekly workout checkmarks remain in their existing formats and are used for historical views. Existing legacy fitness data is copied to the first local account by the account migration without clearing the source keys.
 
 ## Structure
 

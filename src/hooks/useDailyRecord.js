@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
-import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { getTodayKey } from '../utils/date.js'
+import { readLocalJson } from '../utils/localStorage.js'
 import { HABITS_STORAGE_KEY, WATER_STORAGE_KEY } from '../data/dailyTrackers.js'
 import { WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
-
-function loadRecord(key, createInitialData, isValidData, date = getTodayKey()) {
-  const stored = readLocalJson(key, null)
-  if (stored?.date === date && isValidData(stored.data)) return stored
-  return { date, data: createInitialData() }
-}
+import { loadDailyRecord, saveDailyRecord } from '../utils/dailyRecords.js'
 
 export function useDailyRecord(key, createInitialData, isValidData) {
-  const [record, setRecord] = useState(() => loadRecord(key, createInitialData, isValidData))
+  const [loaded] = useState(() => loadDailyRecord(key, createInitialData, isValidData))
+  const [record, setRecord] = useState(loaded.record)
+  const [history, setHistory] = useState(loaded.history)
 
   useEffect(() => {
-    writeLocalJson(key, record)
-  }, [key, record])
+    if (!saveDailyRecord(key, record, isValidData)) {
+      console.error('FitLife could not save daily progress history. Check browser storage availability.')
+    }
+  }, [key, record, isValidData])
 
   useEffect(() => {
     if (key !== WATER_STORAGE_KEY && key !== HABITS_STORAGE_KEY) return
@@ -29,26 +28,32 @@ export function useDailyRecord(key, createInitialData, isValidData) {
   useEffect(() => {
     const refreshForToday = () => {
       const today = getTodayKey()
-      setRecord((current) => current.date === today
-        ? current
-        : loadRecord(key, createInitialData, isValidData, today))
+      const next = loadDailyRecord(key, createInitialData, isValidData, today)
+      setHistory((current) => ({ ...current, ...next.history }))
+      setRecord((current) => current.date === today ? current : next.record)
     }
-    const timer = window.setInterval(refreshForToday, 30_000)
     document.addEventListener('visibilitychange', refreshForToday)
+    window.addEventListener('focus', refreshForToday)
+    window.addEventListener('pageshow', refreshForToday)
     return () => {
-      window.clearInterval(timer)
       document.removeEventListener('visibilitychange', refreshForToday)
+      window.removeEventListener('focus', refreshForToday)
+      window.removeEventListener('pageshow', refreshForToday)
     }
   }, [key, createInitialData, isValidData])
 
   const updateData = useCallback((update) => {
+    const today = getTodayKey()
+    if (record.date !== today) {
+      const next = loadDailyRecord(key, createInitialData, isValidData, today)
+      setHistory((current) => ({ ...current, ...next.history }))
+    }
     setRecord((current) => {
-      const today = getTodayKey()
       const currentData = current.date === today ? current.data : createInitialData()
       const data = typeof update === 'function' ? update(currentData) : update
       return { date: today, data }
     })
-  }, [createInitialData])
+  }, [createInitialData, isValidData, key, record.date])
 
-  return { data: record.data, updateData }
+  return { data: record.data, updateData, history: { ...history, [record.date]: record }, date: record.date }
 }

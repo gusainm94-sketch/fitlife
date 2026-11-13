@@ -29,6 +29,27 @@ export function writeLocalJson(key, value) {
   }
 }
 
+export function readLocalJsonEntries(prefix) {
+  const scopedPrefix = getAccountStorageKey(prefix)
+  const entries = {}
+  try {
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index)
+      if (!key || !key.startsWith(scopedPrefix)) continue
+      const stored = window.localStorage.getItem(key)
+      if (!stored) continue
+      try {
+        entries[key.slice(scopedPrefix.length)] = JSON.parse(stored)
+      } catch {
+        continue
+      }
+    }
+  } catch {
+    return entries
+  }
+  return entries
+}
+
 export function migrateLegacyAccountData(userId, name) {
   const legacyPrefixes = [
     'fitlife.profile.v1',

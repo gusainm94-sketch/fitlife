@@ -10,13 +10,19 @@ import WorkoutPlannerPage from './pages/WorkoutPlannerPage.jsx'
 import HabitsPage from './pages/HabitsPage.jsx'
 import ProgressPage from './pages/ProgressPage.jsx'
 import RewardsPage from './pages/RewardsPage.jsx'
+import MembershipPage from './pages/MembershipPage.jsx'
+import { MembershipProvider } from './context/MembershipContext.jsx'
 import './App.css'
 
 function RequireAuth() {
   const { user } = useAuth()
   const location = useLocation()
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
-  return <AppProvider key={user.id} user={user}><Outlet /></AppProvider>
+  return (
+    <AppProvider key={user.id} user={user}>
+      <MembershipProvider userId={user.id}><Outlet /></MembershipProvider>
+    </AppProvider>
+  )
 }
 
 export default function App() {
@@ -34,6 +40,7 @@ export default function App() {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/habits" element={<HabitsPage />} />
           <Route path="/rewards" element={<RewardsPage />} />
+          <Route path="/membership" element={<MembershipPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, Flame, Leaf, Plus, Utensils } from 'lucide-react'
 import { INDIAN_MEALS, MEAL_CATEGORIES } from '../data/meals.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
+import { getTodayKey } from '../utils/date.js'
 
 const FILTERS = [
   { id: 'all', label: 'All meals' },
@@ -9,10 +10,7 @@ const FILTERS = [
   { id: 'non-veg', label: 'Non-Veg' },
 ]
 
-function getTodayKey() {
-  const today = new Date()
-  return `fitlife-diet-plan-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
+const getTodayMealStorageKey = () => `fitlife-diet-plan-${getTodayKey()}`
 
 function readMealPlan(storageKey) {
   const saved = readLocalJson(storageKey, {})
@@ -35,7 +33,7 @@ function MealCard({ meal, selected, onToggle }) {
 
 export default function DietPlannerPage() {
   const [mealPlan, setMealPlan] = useState(() => {
-    const storageKey = getTodayKey()
+    const storageKey = getTodayMealStorageKey()
     return { storageKey, selectedMeals: readMealPlan(storageKey) }
   })
   const [filter, setFilter] = useState('all')
@@ -47,16 +45,18 @@ export default function DietPlannerPage() {
 
   useEffect(() => {
     const refreshForToday = () => {
-      const nextStorageKey = getTodayKey()
+      const nextStorageKey = getTodayMealStorageKey()
       setMealPlan((current) => current.storageKey === nextStorageKey
         ? current
         : { storageKey: nextStorageKey, selectedMeals: readMealPlan(nextStorageKey) })
     }
-    const timer = window.setInterval(refreshForToday, 30_000)
     document.addEventListener('visibilitychange', refreshForToday)
+    window.addEventListener('focus', refreshForToday)
+    window.addEventListener('pageshow', refreshForToday)
     return () => {
-      window.clearInterval(timer)
       document.removeEventListener('visibilitychange', refreshForToday)
+      window.removeEventListener('focus', refreshForToday)
+      window.removeEventListener('pageshow', refreshForToday)
     }
   }, [])
 

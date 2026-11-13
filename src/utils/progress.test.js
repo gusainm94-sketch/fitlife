@@ -5,9 +5,11 @@ import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../da
 import {
   BADGE_UPDATE_EVENT,
   REWARDS_STORAGE_KEY,
+  buildDailyProgressRecords,
   getBadgeEligibility,
   getCompletedWorkoutSessions,
   getEligibleBadgeIds,
+  getProgressPeriodSummary,
   getWeekId,
   getWorkoutProgress,
   loadEarnedBadgeIds,
@@ -49,6 +51,47 @@ test('partial workouts do not count as completed sessions', () => {
 test('rest days are not represented as failed workout completion', () => {
   const sunday = new Date(2026, 10, 15)
   assert.equal(getWorkoutProgress({}, sunday).dailyPercent, null)
+})
+
+test('daily and period history uses saved dates and meal estimates without filling gaps', () => {
+  const monday = new Date(2026, 10, 9)
+  const weekId = getWeekId(monday)
+  const workouts = {}
+  completeOneWorkout(workouts, 'gym', weekId, 0)
+  const waterHistory = {
+    '2026-11-10': { date: '2026-11-10', data: { totalMl: 1250 } },
+  }
+  const habitHistory = {
+    '2026-11-10': { date: '2026-11-10', data: { 'morning-walk': true, exercise: true } },
+  }
+  const records = buildDailyProgressRecords({
+    waterHistory,
+    habitHistory,
+    mealHistory: {
+      '2026-11-09': { breakfast: 'poha', lunch: 'rajma-chawal' },
+      '2026-11-12': { dinner: 'dal-khichdi' },
+    },
+    workoutProgress: workouts,
+  })
+
+  assert.deepEqual(records.map(({ date }) => date), ['2026-11-09', '2026-11-10', '2026-11-12'])
+  assert.equal(records[0].caloriesConsumedKcal, 800)
+  assert.equal(records[0].completedWorkout, true)
+  assert.equal(records[0].workoutPercent, 100)
+  assert.equal(records[0].completedExercises, 4)
+  assert.equal(records[1].waterMl, 1250)
+  assert.equal(records[1].completedHabits, 2)
+
+  const summary = getProgressPeriodSummary(records, '2026-11-09', '2026-11-12')
+  assert.deepEqual(summary, {
+    trackedDays: 3,
+    caloriesConsumedKcal: 1230,
+    caloriesBurnedKcal: 0,
+    completedWorkouts: 1,
+    completedExercises: 4,
+    averageWaterMl: 417,
+    averageHabitPercent: 13,
+  })
 })
 
 test('gym levels keep the six-day split, complete rest day, and unique exercise progress', () => {
