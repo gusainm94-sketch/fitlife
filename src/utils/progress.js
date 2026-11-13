@@ -1,5 +1,6 @@
 import { DAILY_HABITS, DAILY_WATER_GOAL_ML } from '../data/dailyTrackers.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
+import { readLocalJson, writeLocalJson } from './localStorage.js'
 
 export const REWARDS_STORAGE_KEY = 'fitlife.earned-badges.v1'
 export const BADGE_UPDATE_EVENT = 'fitlife:badges-updated'
@@ -120,12 +121,8 @@ export function getEligibleBadgeIds({ workoutProgress = {}, waterRecord, habitRe
 }
 
 export function loadEarnedBadgeIds() {
-  try {
-    const saved = JSON.parse(window.localStorage.getItem(REWARDS_STORAGE_KEY) ?? '[]')
-    return Array.isArray(saved) ? [...new Set(saved.filter((id) => BADGES.some((badge) => badge.id === id)))] : []
-  } catch {
-    return []
-  }
+  const saved = readLocalJson(REWARDS_STORAGE_KEY, [])
+  return Array.isArray(saved) ? [...new Set(saved.filter((id) => BADGES.some((badge) => badge.id === id)))] : []
 }
 
 export function saveNewlyEarnedBadges({ workoutProgress, waterRecord, habitRecord } = {}) {
@@ -133,11 +130,8 @@ export function saveNewlyEarnedBadges({ workoutProgress, waterRecord, habitRecor
   const earned = [...new Set([...existing, ...getEligibleBadgeIds({ workoutProgress, waterRecord, habitRecord })])]
 
   if (earned.length !== existing.length) {
-    try {
-      window.localStorage.setItem(REWARDS_STORAGE_KEY, JSON.stringify(earned))
+    if (writeLocalJson(REWARDS_STORAGE_KEY, earned)) {
       window.dispatchEvent(new Event(BADGE_UPDATE_EVENT))
-    } catch {
-      // Keep the app usable when browser storage is unavailable.
     }
   }
 

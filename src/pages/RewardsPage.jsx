@@ -11,6 +11,7 @@ import {
   isWaterIntake,
 } from '../data/dailyTrackers.js'
 import { formatToday } from '../utils/date.js'
+import { getAccountStorageKey } from '../utils/localStorage.js'
 import {
   BADGE_UPDATE_EVENT,
   BADGES,
@@ -33,7 +34,7 @@ function subscribeToBadgeChanges(onChange) {
 
 function getBadgeSnapshot() {
   try {
-    return window.localStorage.getItem(REWARDS_STORAGE_KEY) ?? '[]'
+    return window.localStorage.getItem(getAccountStorageKey(REWARDS_STORAGE_KEY)) ?? '[]'
   } catch {
     return '[]'
   }

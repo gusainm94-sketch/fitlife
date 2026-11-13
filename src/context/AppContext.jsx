@@ -5,12 +5,12 @@ import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
 
-function loadProfile() {
+function loadProfile(userName) {
   const saved = readLocalJson(PROFILE_STORAGE_KEY, null)
-  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return DEFAULT_PROFILE
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return { ...DEFAULT_PROFILE, name: userName }
 
   return {
-    name: typeof saved.name === 'string' && saved.name.trim() ? saved.name.trim() : DEFAULT_PROFILE.name,
+    name: typeof saved.name === 'string' && saved.name.trim() ? saved.name.trim() : userName,
     age: Number.isFinite(Number(saved.age)) ? Number(saved.age) : DEFAULT_PROFILE.age,
     height: Number.isFinite(Number(saved.height)) ? Number(saved.height) : DEFAULT_PROFILE.height,
     weight: Number.isFinite(Number(saved.weight)) ? Number(saved.weight) : DEFAULT_PROFILE.weight,
@@ -51,8 +51,8 @@ function loadWorkoutProgress() {
   }
 }
 
-export function AppProvider({ children }) {
-  const [profile, setProfile] = useState(loadProfile)
+export function AppProvider({ children, user }) {
+  const [profile, setProfile] = useState(() => loadProfile(user.name))
   const [workoutProgress, setWorkoutProgress] = useState(loadWorkoutProgress)
   const dashboardStats = DASHBOARD_STATS
 

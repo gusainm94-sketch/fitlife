@@ -8,7 +8,7 @@ Install dependencies with `npm install`, start the development server with `npm 
 
 ## Current stage
 
-The dashboard's activity metrics are illustrative and are not recorded activity. Profile details, workout checkmarks, meal selections, daily water and habit records, and earned badges are saved in the browser's local storage. There is no backend, account sync, or authentication; weight history is not available because historical weigh-ins are not collected.
+The dashboard's activity metrics are illustrative and are not recorded activity. Profile details, workout checkmarks, meal selections, daily water and habit records, and earned badges are saved in browser Local Storage separately for each local demo account. The frontend-only account system does not provide production authentication, backend services, or account sync. Weight history is not available because historical weigh-ins are not collected.
 
 ## Structure
 

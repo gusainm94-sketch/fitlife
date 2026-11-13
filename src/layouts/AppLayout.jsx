@@ -1,7 +1,8 @@
-import { Activity, Bell, CalendarDays, ChartNoAxesCombined, Droplets, Dumbbell, Flame, House, Leaf, Moon, Pencil, Scale, Sun, Trophy } from 'lucide-react'
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, Droplets, Dumbbell, Flame, House, Leaf, LogOut, Moon, Pencil, Scale, Sun, Trophy } from 'lucide-react'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
+import { useAuth } from '../hooks/useAuth.js'
 import ProfileEditor from '../components/ProfileEditor.jsx'
 import { formatToday } from '../utils/date.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
@@ -26,6 +27,8 @@ function BrandMark() {
 
 export default function AppLayout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const { profile, updateProfile } = useAppData()
   const [theme, setTheme] = useState(() => readLocalJson(THEME_STORAGE_KEY, 'light') === 'dark' ? 'dark' : 'light')
   const [isProfileEditorOpen, setProfileEditorOpen] = useState(false)
@@ -47,6 +50,10 @@ export default function AppLayout() {
     closeProfileEditor()
   }, [closeProfileEditor, updateProfile])
   const initials = profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <div className="app-shell">
@@ -65,7 +72,7 @@ export default function AppLayout() {
         <header className="topbar">
           <NavLink className="mobile-brand" to="/" aria-label="FitLife overview"><BrandMark />fitlife</NavLink>
           <div className="breadcrumb">Workspace <span aria-hidden="true"> / </span> <strong>{currentTitle(pathname)}</strong></div>
-          <div className="topbar-actions"><span className="date-label"><CalendarDays size={14} /> {formatToday()}</span><button className="icon-button theme-toggle" type="button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}</button><span className="icon-button" aria-hidden="true"><Bell size={16} /></span><button className="icon-button profile-topbar-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={15} /></button></div>
+          <div className="topbar-actions"><span className="date-label"><CalendarDays size={14} /> {formatToday()}</span><button className="icon-button theme-toggle" type="button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}</button><span className="icon-button" aria-hidden="true"><Bell size={16} /></span><button className="icon-button profile-topbar-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={15} /></button><button className="logout-button" type="button" onClick={handleLogout}><LogOut size={15} /><span>Log out</span></button></div>
         </header>
         <Outlet />
       </main>
