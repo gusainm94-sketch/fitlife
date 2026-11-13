@@ -174,6 +174,11 @@
 .workout-mode-toggle button { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 0; border-radius: 7px; color: #78847c; background: transparent; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s, box-shadow .2s; }
 .workout-mode-toggle button:hover { color: #326b46; background: #f3f8f3; }
 .workout-mode-toggle button.active { color: #fff; background: #2b6542; box-shadow: 0 2px 6px rgb(23 60 44 / 13%); }
+.workout-difficulty-row { display: flex; align-items: center; justify-content: flex-end; gap: 11px; margin: -8px 0 15px; color: var(--muted); font-size: 10px; font-weight: 650; }
+.workout-difficulty-toggle { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid #e6ebe6; border-radius: 9px; background: #fff; }
+.workout-difficulty-toggle button { min-height: 31px; padding: 0 11px; border: 0; border-radius: 6px; color: #78847c; background: transparent; font-size: 10px; font-weight: 600; cursor: pointer; }
+.workout-difficulty-toggle button:hover { color: #326b46; background: #f3f8f3; }
+.workout-difficulty-toggle button.active { color: #fff; background: #2b6542; }
 .workout-week-panel { margin-bottom: 15px; padding: 19px; }
 .workout-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
 .workout-section-heading h2 { margin: 0; color: #27382d; font-size: 14px; font-weight: 650; }
@@ -196,6 +201,12 @@
 .workout-session-title .eyebrow { margin-bottom: 5px; font-size: 9px; }
 .workout-session-title h2 { margin: 0; color: #27382d; font-size: 17px; font-weight: 650; letter-spacing: -.3px; }
 .workout-session-title p:last-child { margin: 5px 0 0; color: #929b94; font-size: 10px; }
+.workout-category-badge { display: inline-flex; flex: 0 0 auto; align-items: center; padding: 7px 10px; border-radius: 8px; font-size: 9px; font-weight: 700; }
+.workout-category-badge.strength { color: #35734a; background: #edf5ee; }
+.workout-category-badge.recovery { color: #55738a; background: #edf3f7; }
+.workout-category-badge.conditioning { color: #9a682e; background: #fbf3e8; }
+.workout-category-badge.mobility { color: #745a91; background: #f3eef8; }
+.workout-category-badge.rest { color: #68756c; background: #f0f2f0; }
 .workout-duration { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; color: #718077; font-size: 10px; }
 .workout-progress-block { padding: 16px 0; }
 .workout-progress-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #657369; font-size: 10px; }
@@ -223,6 +234,9 @@
 .rest-day-card strong { display: block; color: #34483a; font-size: 12px; }
 .rest-day-card p { margin: 5px 0 0; color: #7e8d81; font-size: 10px; line-height: 1.6; }
 .workout-safety-note { margin: 15px 0 0; color: #98a199; font-size: 9px; line-height: 1.6; }
+.workout-guidelines { margin-top: 15px; padding: 19px; }
+.workout-guidelines .workout-section-heading { margin-bottom: 10px; }
+.workout-guidelines ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 24px; margin: 0; padding-left: 18px; color: #657369; font-size: 10px; line-height: 1.6; }
 @media (max-width: 900px) {
   .workout-day-button { padding: 8px; }
   .workout-day-focus { font-size: 8px; }
@@ -231,6 +245,9 @@
   .workout-page-heading { align-items: stretch; flex-direction: column; gap: 15px; margin-bottom: 17px; }
   .workout-mode-toggle { display: grid; grid-template-columns: 1fr 1fr; }
   .workout-mode-toggle button { min-height: 40px; }
+  .workout-difficulty-row { align-items: stretch; flex-direction: column; gap: 7px; margin: 0 0 14px; }
+  .workout-difficulty-toggle { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workout-difficulty-toggle button { min-height: 37px; }
   .workout-week-panel { padding: 15px; }
   .workout-week-grid { display: flex; overflow-x: auto; gap: 8px; padding: 1px 1px 7px; scrollbar-color: #cbd9ce transparent; scrollbar-width: thin; }
   .workout-day-button { flex: 0 0 92px; min-height: 103px; padding: 10px; }
@@ -238,6 +255,7 @@
   .workout-session { padding: 17px; }
   .workout-session-heading { align-items: flex-start; }
   .workout-duration { padding-top: 5px; }
+  .workout-guidelines ul { grid-template-columns: 1fr; gap: 7px; }
 }
 @media (max-width: 420px) {
   .workout-session-heading { flex-direction: column; }
@@ -857,4 +875,42 @@ html[data-theme='dark'] .bmi-save-button:disabled {
 html[data-theme='dark'] .habit-row-icon {
   color: #a7d8af;
   background: #263a2b;
+}
+html[data-theme='dark'] .workout-difficulty-toggle {
+  border-color: var(--line);
+  background: var(--surface);
+}
+html[data-theme='dark'] .workout-difficulty-toggle button {
+  color: #a5b2a9;
+}
+html[data-theme='dark'] .workout-difficulty-toggle button:hover {
+  color: #a3d8ad;
+  background: #28382c;
+}
+html[data-theme='dark'] .workout-difficulty-toggle button.active {
+  color: #fff;
+  background: #34734a;
+}
+html[data-theme='dark'] .workout-guidelines ul {
+  color: #a8b6ac;
+}
+html[data-theme='dark'] .workout-category-badge.strength {
+  color: #a7d8af;
+  background: #263a2b;
+}
+html[data-theme='dark'] .workout-category-badge.recovery {
+  color: #a6c8dc;
+  background: #26363e;
+}
+html[data-theme='dark'] .workout-category-badge.conditioning {
+  color: #e2bd87;
+  background: #403525;
+}
+html[data-theme='dark'] .workout-category-badge.mobility {
+  color: #c4a8df;
+  background: #362d42;
+}
+html[data-theme='dark'] .workout-category-badge.rest {
+  color: #b6c0b9;
+  background: #303a33;
 }

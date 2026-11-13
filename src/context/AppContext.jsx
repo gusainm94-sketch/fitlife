@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DASHBOARD_STATS, DEFAULT_PROFILE, FITNESS_LEVELS, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
+import { GYM_DIFFICULTIES } from '../data/workouts.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
@@ -20,24 +21,34 @@ function loadProfile() {
 
 function loadWorkoutProgress() {
   const saved = readLocalJson(WORKOUT_PROGRESS_STORAGE_KEY, {})
-  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return { gym: {}, home: {} }
+  const emptyProgress = { gym: Object.fromEntries(GYM_DIFFICULTIES.map((level) => [level, {}])), home: {} }
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return emptyProgress
 
-  return ['gym', 'home'].reduce((progress, mode) => {
-    const savedWeeks = saved[mode]
-    progress[mode] = {}
-    if (!savedWeeks || typeof savedWeeks !== 'object' || Array.isArray(savedWeeks)) return progress
+  const loadWeeks = (savedWeeks) => {
+    const weeks = {}
+    if (!savedWeeks || typeof savedWeeks !== 'object' || Array.isArray(savedWeeks)) return weeks
 
     for (const [week, savedDays] of Object.entries(savedWeeks)) {
       if (!savedDays || typeof savedDays !== 'object' || Array.isArray(savedDays)) continue
-      progress[mode][week] = Object.fromEntries(Object.entries(savedDays).map(([day, exercises]) => [
+      weeks[week] = Object.fromEntries(Object.entries(savedDays).map(([day, exercises]) => [
         day,
         exercises && typeof exercises === 'object' && !Array.isArray(exercises)
           ? Object.fromEntries(Object.entries(exercises).filter(([, completed]) => completed === true))
           : {},
       ]))
     }
-    return progress
-  }, {})
+    return weeks
+  }
+  const savedGym = saved.gym && typeof saved.gym === 'object' && !Array.isArray(saved.gym) ? saved.gym : {}
+  const hasDifficultyData = GYM_DIFFICULTIES.some((level) => Object.hasOwn(savedGym, level))
+
+  return {
+    gym: Object.fromEntries(GYM_DIFFICULTIES.map((level) => [
+      level,
+      loadWeeks(hasDifficultyData ? savedGym[level] : level === 'Beginner' ? savedGym : {}),
+    ])),
+    home: loadWeeks(saved.home),
+  }
 }
 
 export function AppProvider({ children }) {
@@ -68,19 +79,30 @@ export function AppProvider({ children }) {
     })
   }, [])
 
-  const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId) => {
+  const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId, difficulty = 'Beginner') => {
     setWorkoutProgress((current) => {
-      const currentWeek = current[mode]?.[week] ?? {}
+      const progressKey = mode === 'gym' ? difficulty : mode
+      const currentWeeks = current[mode]?.[progressKey] ?? {}
+      const currentWeek = currentWeeks[week] ?? {}
       const currentDay = currentWeek[day] ?? {}
+      const nextWeeks = {
+        ...currentWeeks,
+        [week]: {
+          ...currentWeek,
+          [day]: { ...currentDay, [exerciseId]: !currentDay[exerciseId] },
+        },
+      }
+
+      if (mode === 'gym') {
+        return {
+          ...current,
+          gym: { ...current.gym, [progressKey]: nextWeeks },
+        }
+      }
+
       return {
         ...current,
-        [mode]: {
-          ...current[mode],
-          [week]: {
-            ...currentWeek,
-            [day]: { ...currentDay, [exerciseId]: !currentDay[exerciseId] },
-          },
-        },
+        [mode]: nextWeeks,
       }
     })
   }, [])

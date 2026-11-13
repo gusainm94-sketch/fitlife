@@ -1,5 +1,5 @@
 import { DAILY_HABITS, DAILY_WATER_GOAL_ML } from '../data/dailyTrackers.js'
-import { WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
+import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
 
 export const REWARDS_STORAGE_KEY = 'fitlife.earned-badges.v1'
 export const BADGE_UPDATE_EVENT = 'fitlife:badges-updated'
@@ -11,17 +11,39 @@ export const BADGES = [
   { id: 'workout-champion', name: 'Workout Champion', description: 'Complete five workout sessions.', icon: 'trophy' },
 ]
 
+function getDayProgress(workoutProgress, mode, weekId, dayId, difficulty = 'Beginner') {
+  if (mode === 'home') return workoutProgress.home?.[weekId]?.[dayId] ?? {}
+
+  const gymProgress = workoutProgress.gym ?? {}
+  const levelProgress = gymProgress[difficulty]
+  if (levelProgress && typeof levelProgress === 'object') return levelProgress[weekId]?.[dayId] ?? {}
+  return difficulty === 'Beginner' ? gymProgress[weekId]?.[dayId] ?? {} : {}
+}
+
+function getPlansForMode(mode) {
+  return mode === 'gym' ? GYM_DIFFICULTIES.map((difficulty) => ({ difficulty, plans: GYM_WORKOUTS[difficulty] })) : [{ plans: WEEKLY_WORKOUTS.home }]
+}
+
 export function getCompletedWorkoutSessions(workoutProgress = {}) {
   const completed = []
 
   for (const mode of ['gym', 'home']) {
-    const modeProgress = workoutProgress[mode] ?? {}
-    for (const [weekId, week] of Object.entries(modeProgress)) {
-      for (const [index, day] of WEEKDAYS.entries()) {
-        const exercises = WEEKLY_WORKOUTS[mode][index].exercises
-        const dayProgress = week?.[day.id] ?? {}
-        if (exercises.length > 0 && exercises.every(({ id }) => dayProgress[id] === true)) {
-          completed.push({ mode, weekId, dayId: day.id })
+    for (const { difficulty, plans } of getPlansForMode(mode)) {
+      const progressKey = mode === 'gym' ? workoutProgress.gym?.[difficulty] : workoutProgress.home
+      const savedWeekIds = new Set(Object.keys(progressKey ?? {}))
+      if (mode === 'gym' && difficulty === 'Beginner') {
+        Object.keys(workoutProgress.gym ?? {}).forEach((key) => {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(key)) savedWeekIds.add(key)
+        })
+      }
+
+      for (const weekId of savedWeekIds) {
+        for (const [index, day] of WEEKDAYS.entries()) {
+          const exercises = plans[index].exercises
+          const dayProgress = getDayProgress(workoutProgress, mode, weekId, day.id, difficulty)
+          if (exercises.length > 0 && exercises.every(({ id }) => dayProgress[id] === true)) {
+            completed.push({ mode, ...(difficulty ? { difficulty } : {}), weekId, dayId: day.id })
+          }
         }
       }
     }
@@ -41,19 +63,23 @@ export function getWorkoutProgress(workoutProgress = {}, date = new Date()) {
   const weekId = getWeekId(date)
   const dayIndex = (date.getDay() + 6) % 7
   const dayId = WEEKDAYS[dayIndex].id
-  const dailyPercents = ['gym', 'home'].map((mode) => {
-    const exercises = WEEKLY_WORKOUTS[mode][dayIndex].exercises
-    const dayProgress = workoutProgress[mode]?.[weekId]?.[dayId] ?? {}
-    if (!exercises.length) return null
-    return Math.round((exercises.filter(({ id }) => dayProgress[id] === true).length / exercises.length) * 100)
+  const plans = ['gym', 'home'].flatMap((mode) => getPlansForMode(mode).map(({ difficulty, plans: modePlans }) => ({
+    mode,
+    difficulty,
+    plan: modePlans[dayIndex],
+  })))
+  const dailyPercents = plans.map(({ mode, difficulty, plan }) => {
+    if (!plan.exercises.length) return null
+    const dayProgress = getDayProgress(workoutProgress, mode, weekId, dayId, difficulty)
+    return Math.round((plan.exercises.filter(({ id }) => dayProgress[id] === true).length / plan.exercises.length) * 100)
   })
   const completedDays = WEEKDAYS.reduce((total, day, index) => {
-    const workoutsForDay = ['gym', 'home'].filter((mode) => {
-      const exercises = WEEKLY_WORKOUTS[mode][index].exercises
-      const dayProgress = workoutProgress[mode]?.[weekId]?.[day.id] ?? {}
+    const hasCompletedWorkout = ['gym', 'home'].some((mode) => getPlansForMode(mode).some(({ difficulty, plans: modePlans }) => {
+      const exercises = modePlans[index].exercises
+      const dayProgress = getDayProgress(workoutProgress, mode, weekId, day.id, difficulty)
       return exercises.length > 0 && exercises.every(({ id }) => dayProgress[id] === true)
-    })
-    return total + Number(workoutsForDay.length > 0)
+    }))
+    return total + Number(hasCompletedWorkout)
   }, 0)
   const completedInWeek = getCompletedWorkoutSessions(workoutProgress).filter(({ weekId: savedWeek }) => savedWeek === weekId).length
 
@@ -65,11 +91,11 @@ export function getWorkoutProgress(workoutProgress = {}, date = new Date()) {
     weekId,
     activityByDay: WEEKDAYS.map((day, index) => ({
       ...day,
-      completed: ['gym', 'home'].some((mode) => {
-        const exercises = WEEKLY_WORKOUTS[mode][index].exercises
-        const dayProgress = workoutProgress[mode]?.[weekId]?.[day.id] ?? {}
+      completed: ['gym', 'home'].some((mode) => getPlansForMode(mode).some(({ difficulty, plans: modePlans }) => {
+        const exercises = modePlans[index].exercises
+        const dayProgress = getDayProgress(workoutProgress, mode, weekId, day.id, difficulty)
         return exercises.length > 0 && exercises.every(({ id }) => dayProgress[id] === true)
-      }),
+      })),
     })),
   }
 }
