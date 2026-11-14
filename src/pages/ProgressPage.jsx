@@ -43,16 +43,17 @@ function WeeklyActivityChart({ activityByDay }) {
 }
 
 function WeightVisualization({ weight, isSampleProfile }) {
-  const marker = Math.max(10, Math.min(90, 50 + (weight - 70) * 3))
+  const hasWeight = Number.isFinite(weight)
+  const marker = hasWeight ? Math.max(10, Math.min(90, 50 + (weight - 70) * 3)) : null
   return (
     <section className="panel progress-panel weight-progress-panel" aria-labelledby="weight-progress-title">
-      <div className="progress-panel-heading"><div><h2 id="weight-progress-title">Weight snapshot</h2><p>{isSampleProfile ? 'Sample profile measurement' : 'Current measurement from your saved profile'}</p></div><span className="progress-panel-icon"><Weight size={17} /></span></div>
-      <div className="weight-snapshot"><strong>{weight.toLocaleString(undefined, { maximumFractionDigits: 1 })}</strong><span>kg</span></div>
-      <div className="weight-scale" role="img" aria-label={`${isSampleProfile ? 'Sample' : 'Current saved'} weight ${weight} kilograms; no prior weight entries are available`}>
-        <span className="weight-scale-marker" style={{ left: `${marker}%` }} />
+      <div className="progress-panel-heading"><div><h2 id="weight-progress-title">Weight snapshot</h2><p>{hasWeight ? isSampleProfile ? 'Sample profile measurement' : 'Current measurement from your saved profile' : 'No weight measurement provided'}</p></div><span className="progress-panel-icon"><Weight size={17} /></span></div>
+      <div className="weight-snapshot"><strong>{hasWeight ? weight.toLocaleString(undefined, { maximumFractionDigits: 1 }) : '—'}</strong>{hasWeight && <span>kg</span>}</div>
+      <div className="weight-scale" role="img" aria-label={hasWeight ? `${isSampleProfile ? 'Sample' : 'Current saved'} weight ${weight} kilograms; no prior weight entries are available` : 'No weight measurement is saved'}>
+        {marker !== null && <span className="weight-scale-marker" style={{ left: `${marker}%` }} />}
         <span className="weight-scale-start">Lower</span><span className="weight-scale-end">Higher</span>
       </div>
-      <p className="progress-chart-note">A weight history is not available yet. This view uses {isSampleProfile ? 'the sample profile value only' : 'your current saved profile measurement only'}.</p>
+      <p className="progress-chart-note">{hasWeight ? `A weight history is not available yet. This view uses ${isSampleProfile ? 'the sample profile value only' : 'your current saved profile measurement only'}.` : 'Add a weight in Edit profile or the BMI calculator to see a measurement here.'}</p>
     </section>
   )
 }
@@ -103,7 +104,7 @@ export default function ProgressPage() {
 
       <section className="progress-profile-row" aria-label="Current profile measurements">
         <article className="progress-profile-card"><span className="progress-profile-icon"><Scale size={17} /></span><div><small>{isSampleProfile ? 'Sample BMI' : 'Current BMI'}</small><strong>{bmi?.toFixed(1) ?? '—'}</strong></div><span className="progress-profile-tag">{bmiCategory?.label ?? 'Unavailable'}</span></article>
-        <article className="progress-profile-card"><span className="progress-profile-icon weight"><Weight size={17} /></span><div><small>{isSampleProfile ? 'Sample weight' : 'Current weight'}</small><strong>{profile.weight.toLocaleString(undefined, { maximumFractionDigits: 1 })} <em>kg</em></strong></div><span className="progress-profile-tag">{isSampleProfile ? 'Sample profile' : 'Saved profile'}</span></article>
+        <article className="progress-profile-card"><span className="progress-profile-icon weight"><Weight size={17} /></span><div><small>{isSampleProfile ? 'Sample weight' : 'Current weight'}</small><strong>{profile.weight === null ? 'Not provided' : <>{profile.weight.toLocaleString(undefined, { maximumFractionDigits: 1 })} <em>kg</em></>}</strong></div><span className="progress-profile-tag">{isSampleProfile ? 'Sample profile' : 'Saved profile'}</span></article>
       </section>
 
       <div className="progress-visual-grid">

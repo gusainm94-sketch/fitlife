@@ -137,21 +137,39 @@
 .profile-edit-button:hover { color: #fff; background: rgb(255 255 255 / 10%); }
 .profile-topbar-button { color: #39744c; }
 .profile-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; overflow-y: auto; place-items: center; padding: 20px; background: rgb(17 35 25 / 48%); backdrop-filter: blur(4px); animation: profile-fade-in .16s ease-out; }
-.profile-dialog { width: min(100%, 500px); max-height: min(760px, calc(100vh - 40px)); overflow-y: auto; padding: 25px; border: 1px solid #e8eee8; border-radius: 17px; background: #fff; box-shadow: 0 24px 80px rgb(11 31 18 / 22%); animation: profile-rise-in .2s ease-out; }
+.profile-dialog { width: min(100%, 620px); max-height: min(760px, calc(100vh - 40px)); overflow-y: auto; padding: 25px; border: 1px solid #e8eee8; border-radius: 17px; background: #fff; box-shadow: 0 24px 80px rgb(11 31 18 / 22%); animation: profile-rise-in .2s ease-out; }
 .profile-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #edf0ed; }
 .profile-dialog-heading .eyebrow { margin-bottom: 6px; }
 .profile-dialog-heading h2 { margin: 0; color: #24372b; font-size: 22px; font-weight: 680; letter-spacing: -.6px; }
 .profile-dialog-heading p:last-child { margin: 7px 0 0; color: #828d84; font-size: 12px; line-height: 1.5; }
+.profile-dialog-heading .profile-privacy-note { margin-top: 7px; color: #89948c; font-size: 10px; line-height: 1.5; }
 .profile-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 13px; padding-top: 20px; }
 .profile-field { display: grid; min-width: 0; gap: 7px; color: #506055; font-size: 11px; font-weight: 650; }
 .profile-field-wide { grid-column: 1 / -1; }
-.profile-field input, .profile-field select { width: 100%; min-width: 0; height: 42px; padding: 0 11px; border: 1px solid #e2e9e3; border-radius: 8px; color: #26382c; background: #fbfcfb; font-size: 13px; font-weight: 450; transition: border-color .2s, box-shadow .2s; }
-.profile-field input:focus, .profile-field select:focus { border-color: #72a77d; outline: 0; box-shadow: 0 0 0 3px rgb(86 145 99 / 13%); }
+.profile-label-row { display: flex; align-items: center; gap: 7px; }
+.profile-optional-label, .profile-field-hint { color: #89948c; font-size: 9px; font-weight: 450; }
+.profile-field input, .profile-field select, .profile-field textarea { width: 100%; min-width: 0; height: 42px; padding: 0 11px; border: 1px solid #e2e9e3; border-radius: 8px; color: #26382c; background: #fbfcfb; font-size: 13px; font-weight: 450; transition: border-color .2s, box-shadow .2s; }
+.profile-field textarea { height: auto; min-height: 82px; padding: 10px 11px; line-height: 1.5; resize: vertical; }
+.profile-field input:focus, .profile-field select:focus, .profile-field textarea:focus { border-color: #72a77d; outline: 0; box-shadow: 0 0 0 3px rgb(86 145 99 / 13%); }
+.profile-field-hint { display: block; margin-top: 8px; }
+.profile-section-heading { margin: 3px 0 0; padding-bottom: 8px; border-bottom: 1px solid #edf0ed; color: #314338; font-size: 11px; font-weight: 700; }
+.profile-avatar-field { min-width: 0; margin: 0; padding: 0; border: 0; color: #506055; font-size: 11px; font-weight: 650; }
+.profile-avatar-field legend { padding: 0; }
+.profile-avatar-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 9px; }
+.profile-avatar-option { display: grid; min-width: 0; min-height: 79px; justify-items: center; align-content: center; gap: 6px; padding: 8px; border: 1px solid #e5ebe6; border-radius: 9px; color: #66746a; background: #fff; font-size: 9px; cursor: pointer; transition: border-color .2s, background .2s; }
+.profile-avatar-option:hover, .profile-avatar-option.selected { border-color: #6b9b74; background: #f3f8f3; }
+.profile-avatar { display: grid; flex: 0 0 auto; overflow: hidden; place-items: center; border: 1px solid rgb(52 83 61 / 12%); border-radius: 50%; background: #e8f1e9; }
+.profile-avatar svg { display: block; width: 100%; height: 100%; }
+.profile-avatar-neutral { --avatar-hair: #4b514c; --avatar-skin: #e8bea0; --avatar-shirt: #6f9578; --avatar-detail: #423c36; background: #e8f1e9; }
+.profile-avatar-male { --avatar-hair: #3e342d; --avatar-skin: #dba982; --avatar-shirt: #668aa2; --avatar-detail: #3c332d; background: #e7eff5; }
+.profile-avatar-female { --avatar-hair: #49332f; --avatar-skin: #efc3a5; --avatar-shirt: #9c789e; --avatar-detail: #493a35; background: #f4eaf2; }
+.user-avatar { margin-right: 0; }
 .input-with-unit { position: relative; display: block; }
 .input-with-unit input { padding-right: 44px; }
 .input-with-unit > span { position: absolute; top: 50%; right: 11px; color: #89948c; font-size: 10px; font-weight: 500; transform: translateY(-50%); }
 .profile-form-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 4px; padding-top: 17px; border-top: 1px solid #edf0ed; }
 .profile-cancel, .profile-save { min-height: 39px; padding: 0 15px; border: 1px solid transparent; border-radius: 8px; font-size: 11px; font-weight: 650; cursor: pointer; transition: background .2s, border-color .2s, transform .2s; }
+.profile-save-error { margin: 0; color: #ad5144; font-size: 10px; line-height: 1.5; }
 .profile-cancel { border-color: #e5ebe6; color: #647168; background: #fff; }
 .profile-cancel:hover { background: #f7f9f7; }
 .profile-save { color: #fff; background: #286341; }
@@ -384,6 +402,10 @@
 .fitness-profile-icon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 10px; color: #438257; background: #edf6ee; }
 .fitness-profile-item small { display: block; color: #8a958d; font-size: 9px; }
 .fitness-profile-item strong { display: block; margin-top: 4px; color: #35463a; font-size: 12px; font-weight: 650; }
+.fitness-profile-identity { display: flex; align-items: center; gap: 11px; padding: 13px; border: 1px solid #edf0ed; border-radius: 10px; background: #fbfcfb; }
+.fitness-profile-identity small { display: block; color: #8a958d; font-size: 9px; }
+.fitness-profile-identity strong { display: block; margin-top: 4px; color: #35463a; font-size: 13px; font-weight: 650; }
+.fitness-profile-limitations { align-items: flex-start; }
 .fitness-profile-hint { margin: 0; color: #919c93; font-size: 9px; line-height: 1.6; }
 @media (max-width: 900px) {
   .bmi-page-grid { grid-template-columns: minmax(0, 1.4fr) minmax(220px, .9fr); }
@@ -393,7 +415,7 @@
   .bmi-page-grid { grid-template-columns: 1fr; gap: 12px; }
   .bmi-calculator-panel, .fitness-profile-panel { padding: 17px; }
   .fitness-profile-panel { grid-template-columns: 1fr 1fr; }
-  .fitness-profile-panel > .bmi-section-heading, .fitness-profile-hint { grid-column: 1 / -1; }
+  .fitness-profile-panel > .bmi-section-heading, .fitness-profile-identity, .fitness-profile-hint { grid-column: 1 / -1; }
   .mobile-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   .mobile-nav a { font-size: 8px; }
 }
@@ -403,7 +425,7 @@
   .bmi-save-row { align-items: stretch; flex-direction: column; }
   .bmi-save-button { align-self: flex-end; }
   .fitness-profile-panel { grid-template-columns: 1fr; }
-  .fitness-profile-panel > .bmi-section-heading, .fitness-profile-hint { grid-column: auto; }
+  .fitness-profile-panel > .bmi-section-heading, .fitness-profile-identity, .fitness-profile-hint { grid-column: auto; }
   .bmi-range-legend { gap: 8px 10px; }
 }
 
@@ -567,6 +589,7 @@ html[data-theme='dark'] .habit-row,
 html[data-theme='dark'] .diet-meal-card,
 html[data-theme='dark'] .diet-meal-select,
 html[data-theme='dark'] .fitness-profile-item,
+html[data-theme='dark'] .fitness-profile-identity,
 html[data-theme='dark'] .progress-metric-card {
   border-color: var(--line);
   color: var(--ink);
@@ -603,6 +626,7 @@ html[data-theme='dark'] .icon-button:hover {
 }
 html[data-theme='dark'] .profile-dialog-heading,
 html[data-theme='dark'] .profile-form-actions,
+html[data-theme='dark'] .profile-section-heading,
 html[data-theme='dark'] .workout-session-heading,
 html[data-theme='dark'] .bmi-save-row,
 html[data-theme='dark'] .summary-item,
@@ -611,14 +635,41 @@ html[data-theme='dark'] .user-mini {
 }
 html[data-theme='dark'] .profile-field input,
 html[data-theme='dark'] .profile-field select,
+html[data-theme='dark'] .profile-field textarea,
 html[data-theme='dark'] .bmi-input-wrap input {
   border-color: #46564a;
   color: var(--ink);
   background: #17211a;
 }
 html[data-theme='dark'] .profile-field input::placeholder,
+html[data-theme='dark'] .profile-field textarea::placeholder,
 html[data-theme='dark'] .bmi-input-wrap input::placeholder {
   color: #9aa99e;
+}
+html[data-theme='dark'] .profile-section-heading {
+  color: #e6eee8;
+}
+html[data-theme='dark'] .profile-save-error {
+  color: #ef9b8e;
+}
+html[data-theme='dark'] .profile-field,
+html[data-theme='dark'] .profile-avatar-field {
+  color: var(--ink);
+}
+html[data-theme='dark'] .profile-optional-label,
+html[data-theme='dark'] .profile-field-hint,
+html[data-theme='dark'] .profile-dialog-heading .profile-privacy-note {
+  color: #a8b6ac;
+}
+html[data-theme='dark'] .profile-avatar-option {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface);
+}
+html[data-theme='dark'] .profile-avatar-option:hover,
+html[data-theme='dark'] .profile-avatar-option.selected {
+  border-color: #5a956b;
+  background: #283a2c;
 }
 html[data-theme='dark'] .workout-mode-toggle button:hover,
 html[data-theme='dark'] .diet-filter-group button:hover {
@@ -652,6 +703,7 @@ html[data-theme='dark'] .summary-value,
 html[data-theme='dark'] .workout-info strong,
 html[data-theme='dark'] .water-copy strong,
 html[data-theme='dark'] .profile-dialog-heading h2,
+html[data-theme='dark'] .fitness-profile-identity strong,
 html[data-theme='dark'] .workout-section-heading h2,
 html[data-theme='dark'] .workout-day-number,
 html[data-theme='dark'] .workout-day-focus,
@@ -721,6 +773,7 @@ html[data-theme='dark'] .bmi-range-legend span,
 html[data-theme='dark'] .bmi-save-row p,
 html[data-theme='dark'] .bmi-disclaimer,
 html[data-theme='dark'] .fitness-profile-item small,
+html[data-theme='dark'] .fitness-profile-identity small,
 html[data-theme='dark'] .fitness-profile-hint,
 html[data-theme='dark'] .tracker-panel-heading p:last-child,
 html[data-theme='dark'] .water-total-row > div span,

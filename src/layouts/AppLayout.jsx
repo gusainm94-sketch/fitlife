@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
 import { useAuth } from '../hooks/useAuth.js'
+import ProfileAvatar from '../components/ProfileAvatar.jsx'
 import ProfileEditor from '../components/ProfileEditor.jsx'
 import { formatToday } from '../utils/date.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
@@ -31,10 +32,11 @@ export default function AppLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const { profile, updateProfile } = useAppData()
+  const { profile, updateProfile, profileStorageError } = useAppData()
   const { membership } = useMembership()
   const [theme, setTheme] = useState(() => readLocalJson(THEME_STORAGE_KEY, 'light') === 'dark' ? 'dark' : 'light')
   const [isProfileEditorOpen, setProfileEditorOpen] = useState(false)
+  const [profileSaveError, setProfileSaveError] = useState(false)
   const [, refreshCalendarDate] = useState(0)
   const profileTriggerRef = useRef(null)
   useLayoutEffect(() => {
@@ -55,6 +57,7 @@ export default function AppLayout() {
   }, [])
   const openProfileEditor = useCallback((event) => {
     profileTriggerRef.current = event.currentTarget
+    setProfileSaveError(false)
     setProfileEditorOpen(true)
   }, [])
   const closeProfileEditor = useCallback(() => {
@@ -62,10 +65,12 @@ export default function AppLayout() {
     window.requestAnimationFrame(() => profileTriggerRef.current?.focus())
   }, [])
   const saveProfile = useCallback((nextProfile) => {
-    updateProfile(nextProfile)
+    if (!updateProfile(nextProfile)) {
+      setProfileSaveError(true)
+      return
+    }
     closeProfileEditor()
   }, [closeProfileEditor, updateProfile])
-  const initials = profile.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
   const handleLogout = () => {
     logout()
     navigate('/login', { replace: true })
@@ -81,7 +86,7 @@ export default function AppLayout() {
         </nav>
         <div className="sidebar-spacer" />
         <div className="sidebar-tip"><div className="tip-icon"><Flame size={16} /></div><strong>Keep your rhythm</strong><p>Consistency is built one small choice at a time.</p></div>
-        <div className="user-mini"><span className="avatar">{initials}</span><span className="user-mini-copy"><strong>{profile.name}</strong><small>{membership.plan} membership</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
+        <div className="user-mini"><ProfileAvatar avatar={profile.avatar} size={34} className="user-avatar" /><span className="user-mini-copy"><strong>{profile.name}</strong><small>{membership.plan} membership</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
       </aside>
 
       <main className="main-area">
@@ -96,7 +101,7 @@ export default function AppLayout() {
       <nav className="mobile-nav" aria-label="Mobile navigation">
         {navigation.map(({ label, path, icon: Icon }) => <NavLink key={path} to={path} end={path === '/'} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={18} strokeWidth={1.8} /><span>{label === 'Water & habits' ? 'Habits' : label === 'BMI & profile' ? 'BMI' : label === 'Membership' ? 'Plan' : label}</span></NavLink>)}
       </nav>
-      {isProfileEditorOpen && <ProfileEditor profile={profile} onSave={saveProfile} onClose={closeProfileEditor} />}
+      {isProfileEditorOpen && <ProfileEditor profile={profile} onSave={saveProfile} onClose={closeProfileEditor} saveError={profileSaveError || profileStorageError} />}
     </div>
   )
 }

@@ -1,22 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { DASHBOARD_STATS, DEFAULT_PROFILE, FITNESS_LEVELS, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DASHBOARD_STATS, normalizeProfile, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
 import { GYM_DIFFICULTIES } from '../data/workouts.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
 
 function loadProfile(userName) {
-  const saved = readLocalJson(PROFILE_STORAGE_KEY, null)
-  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return { ...DEFAULT_PROFILE, name: userName }
-
-  return {
-    name: typeof saved.name === 'string' && saved.name.trim() ? saved.name.trim() : userName,
-    age: Number.isFinite(Number(saved.age)) ? Number(saved.age) : DEFAULT_PROFILE.age,
-    height: Number.isFinite(Number(saved.height)) ? Number(saved.height) : DEFAULT_PROFILE.height,
-    weight: Number.isFinite(Number(saved.weight)) ? Number(saved.weight) : DEFAULT_PROFILE.weight,
-    goal: typeof saved.goal === 'string' && saved.goal ? saved.goal : DEFAULT_PROFILE.goal,
-    fitnessLevel: FITNESS_LEVELS.includes(saved.fitnessLevel) ? saved.fitnessLevel : DEFAULT_PROFILE.fitnessLevel,
-  }
+  return normalizeProfile(readLocalJson(PROFILE_STORAGE_KEY, null), userName)
 }
 
 function loadWorkoutProgress() {
@@ -53,11 +43,16 @@ function loadWorkoutProgress() {
 
 export function AppProvider({ children, user }) {
   const [profile, setProfile] = useState(() => loadProfile(user.name))
+  const initialProfile = useRef(profile)
+  const [profileStorageError, setProfileStorageError] = useState(false)
   const [workoutProgress, setWorkoutProgress] = useState(loadWorkoutProgress)
   const dashboardStats = DASHBOARD_STATS
 
   useEffect(() => {
-    writeLocalJson(PROFILE_STORAGE_KEY, profile)
+    if (profile !== initialProfile.current) return
+    if (!writeLocalJson(PROFILE_STORAGE_KEY, profile)) {
+      console.error('FitLife could not save profile data. Check browser storage availability.')
+    }
   }, [profile])
 
   useEffect(() => {
@@ -69,15 +64,16 @@ export function AppProvider({ children, user }) {
   }, [workoutProgress])
 
   const updateProfile = useCallback((nextProfile) => {
-    setProfile({
-      name: nextProfile.name.trim(),
-      age: Number(nextProfile.age),
-      height: Number(nextProfile.height),
-      weight: Number(nextProfile.weight),
-      goal: nextProfile.goal,
-      fitnessLevel: FITNESS_LEVELS.includes(nextProfile.fitnessLevel) ? nextProfile.fitnessLevel : DEFAULT_PROFILE.fitnessLevel,
-    })
-  }, [])
+    const updatedProfile = normalizeProfile({ ...profile, ...nextProfile }, user.name)
+    if (!writeLocalJson(PROFILE_STORAGE_KEY, updatedProfile)) {
+      setProfileStorageError(true)
+      return false
+    }
+
+    setProfile(updatedProfile)
+    setProfileStorageError(false)
+    return true
+  }, [profile, user.name])
 
   const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId, difficulty = 'Beginner') => {
     setWorkoutProgress((current) => {
@@ -110,10 +106,11 @@ export function AppProvider({ children, user }) {
   const value = useMemo(() => ({
     profile,
     updateProfile,
+    profileStorageError,
     dashboardStats,
     workoutProgress,
     toggleWorkoutExercise,
-  }), [profile, updateProfile, dashboardStats, workoutProgress, toggleWorkoutExercise])
+  }), [profile, updateProfile, profileStorageError, dashboardStats, workoutProgress, toggleWorkoutExercise])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

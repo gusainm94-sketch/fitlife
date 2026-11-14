@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Check, CheckCircle2, Dumbbell, House, RotateCcw, Sparkles, Target, Timer } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
+import { DEFAULT_PROFILE } from '../data/profile.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
 
 const getTodayIndex = () => (new Date().getDay() + 6) % 7
@@ -86,7 +87,7 @@ export default function WorkoutPlannerPage() {
   const [mode, setMode] = useState('gym')
   const [selectedDayIndex, setSelectedDayIndex] = useState(getTodayIndex)
   const { profile, workoutProgress, toggleWorkoutExercise } = useAppData()
-  const [difficulty, setDifficulty] = useState(profile.fitnessLevel)
+  const [difficulty, setDifficulty] = useState(profile.fitnessLevel || DEFAULT_PROFILE.fitnessLevel)
   useEffect(() => {
     const refreshSelectedDay = () => setSelectedDayIndex(getTodayIndex())
     document.addEventListener('visibilitychange', refreshSelectedDay)

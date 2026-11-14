@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Activity, Check, Info, Save, Scale, Target, UserRound } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
+import ProfileAvatar from '../components/ProfileAvatar.jsx'
 import { calculateBMI, getBMICategory } from '../utils/bmi.js'
 
 const HEIGHT_MIN = 100
@@ -18,19 +19,20 @@ function getInputError(value, label, min, max, unit) {
 }
 
 export default function BmiProfilePage() {
-  const { profile, updateProfile } = useAppData()
+  const { profile, updateProfile, profileStorageError } = useAppData()
   const [draft, setDraft] = useState(null)
   const [savedNotice, setSavedNotice] = useState(false)
 
   const profileChanged = draft && (draft.profileHeight !== profile.height || draft.profileWeight !== profile.weight)
-  const height = !draft || profileChanged ? String(profile.height) : draft.height
-  const weight = !draft || profileChanged ? String(profile.weight) : draft.weight
+  const height = !draft || profileChanged ? String(profile.height ?? '') : draft.height
+  const weight = !draft || profileChanged ? String(profile.weight ?? '') : draft.weight
 
   const heightError = getInputError(height, 'height', HEIGHT_MIN, HEIGHT_MAX, 'cm')
   const weightError = getInputError(weight, 'weight', WEIGHT_MIN, WEIGHT_MAX, 'kg')
   const bmi = useMemo(() => heightError || weightError ? null : calculateBMI(height, weight), [height, heightError, weight, weightError])
   const category = getBMICategory(bmi)
-  const isDirty = Number(height) !== profile.height || Number(weight) !== profile.weight
+  const isDirty = (height === '' ? profile.height !== null : Number(height) !== profile.height)
+    || (weight === '' ? profile.weight !== null : Number(weight) !== profile.weight)
   const markerPosition = bmi === null ? null : Math.max(0, Math.min(100, ((bmi - 15) / 25) * 100))
 
   const updateMeasurements = () => {
@@ -46,8 +48,8 @@ export default function BmiProfilePage() {
       return {
         profileHeight: profile.height,
         profileWeight: profile.weight,
-        height: field === 'height' ? value : currentMatchesProfile ? current.height : String(profile.height),
-        weight: field === 'weight' ? value : currentMatchesProfile ? current.weight : String(profile.weight),
+        height: field === 'height' ? value : currentMatchesProfile ? current.height : String(profile.height ?? ''),
+        weight: field === 'weight' ? value : currentMatchesProfile ? current.weight : String(profile.weight ?? ''),
       }
     })
     setSavedNotice(false)
@@ -103,7 +105,8 @@ export default function BmiProfilePage() {
           </div>
 
           <div className="bmi-save-row">
-            <p>{savedNotice ? <><Check size={14} /> Measurements saved to your profile.</> : isDirty ? 'Your changes are only used for this calculation until saved.' : 'Using the height and weight saved in your profile.'}</p>
+            <p>{savedNotice ? <><Check size={14} /> Measurements saved to your profile.</> : isDirty ? 'Your changes are only used for this calculation until saved.' : profile.height === null || profile.weight === null ? 'Add valid measurements to calculate BMI.' : 'Using the height and weight saved in your profile.'}</p>
+            {profileStorageError && <span className="bmi-field-error" role="alert">Unable to save your profile. Check browser storage availability and try again.</span>}
             <button type="button" className="bmi-save-button" onClick={updateMeasurements} disabled={!isDirty || Boolean(heightError || weightError)}><Save size={14} /> Update saved profile</button>
           </div>
           <p className="bmi-disclaimer"><Info size={13} /> BMI is a general screening measure and does not account for every individual factor. It is not a medical diagnosis.</p>
@@ -114,15 +117,36 @@ export default function BmiProfilePage() {
             <span className="bmi-section-icon"><UserRound size={17} /></span>
             <div><h2 id="fitness-profile-title">Fitness profile</h2><p>Your preferences, at a glance.</p></div>
           </div>
+          <div className="fitness-profile-identity">
+            <ProfileAvatar avatar={profile.avatar} size={48} />
+            <div><small>Profile</small><strong>{profile.name}</strong></div>
+          </div>
+          <div className="fitness-profile-item">
+            <span className="fitness-profile-icon"><UserRound size={16} /></span>
+            <div><small>Age and gender</small><strong>{profile.age ?? 'Not provided'}{profile.age !== null ? ' years' : ''} · {profile.gender || 'Not provided'}</strong></div>
+          </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><Target size={16} /></span>
-            <div><small>Selected fitness goal</small><strong>{profile.goal}</strong></div>
+            <div><small>Fitness goal</small><strong>{profile.goal || 'Not provided'}</strong></div>
           </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><Activity size={16} /></span>
-            <div><small>Fitness level</small><strong>{profile.fitnessLevel}</strong></div>
+            <div><small>Fitness experience</small><strong>{profile.fitnessLevel || 'Not provided'}</strong></div>
           </div>
-          <p className="fitness-profile-hint">To change your goal or fitness level, use Edit profile in the navigation.</p>
+          <div className="fitness-profile-item">
+            <span className="fitness-profile-icon"><Activity size={16} /></span>
+            <div><small>Diet preference</small><strong>{profile.dietPreference || 'Not provided'}</strong></div>
+          </div>
+          <div className="fitness-profile-item">
+            <span className="fitness-profile-icon"><Activity size={16} /></span>
+            <div><small>Smoking status</small><strong>{profile.smokingStatus || 'Not provided'}</strong></div>
+          </div>
+          <div className="fitness-profile-item">
+            <span className="fitness-profile-icon"><Activity size={16} /></span>
+            <div><small>Smartwatch available</small><strong>{profile.smartwatchAvailability || 'Not provided'}</strong></div>
+          </div>
+          {profile.injuries && <div className="fitness-profile-item fitness-profile-limitations"><div><small>Injuries or physical limitations</small><strong>{profile.injuries}</strong></div></div>}
+          <p className="fitness-profile-hint">To update your details or avatar, use Edit profile in the navigation.</p>
         </aside>
       </div>
     </div>
