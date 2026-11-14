@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BadgeCheck, Building2, Check, Clock3, Dumbbell, Gift, ShieldAlert, Sparkles, TicketCheck } from 'lucide-react'
+import { Activity, BadgeCheck, Building2, Check, Clock3, Dumbbell, Gift, ShieldAlert, Sparkles, TicketCheck } from 'lucide-react'
 import { isMembershipExpired } from '../data/membership.js'
 import { useMembership } from '../hooks/useMembership.js'
 
@@ -13,6 +13,44 @@ const benefits = {
   Partner: ['Partner-provided access', 'Fitness tracking and workout tools', 'Access for the code’s stated duration'],
   Premium: ['Full access to FitLife features', 'More ways to plan your workouts', 'Premium access for your selected duration'],
 }
+
+const productCategories = [
+  {
+    name: 'Supplements',
+    items: [
+      ['Whey Protein', 'A protein supplement option for people who choose to use one. Supplements are not required for fitness progress.'],
+      ['Plant Protein', 'A plant-based protein supplement option; check ingredient labels for your own needs.'],
+      ['Creatine', 'A commonly used fitness supplement category. FitLife does not provide medical advice or a use recommendation.'],
+      ['Other common fitness supplements', 'Compare ingredients and consult a qualified professional when appropriate.'],
+    ],
+  },
+  {
+    name: 'Home gym equipment',
+    items: [
+      ['Dumbbells', 'Free weights for resistance exercise.'],
+      ['Resistance Bands', 'Portable resistance equipment.'],
+      ['Weight Benches', 'Support for selected strength exercises.'],
+      ['Pull-up Bars', 'A bodyweight training equipment category.'],
+      ['Yoga Mats', 'A surface for floor-based movement and stretching.'],
+      ['Skipping Ropes', 'A simple conditioning equipment category.'],
+      ['Exercise Machines', 'Stationary equipment; suitability varies by person and setup.'],
+    ],
+  },
+  {
+    name: 'Posture & mobility',
+    items: [
+      ['Posture Support Products', 'A general product category; not a treatment for pain or a diagnosed condition.'],
+      ['Mobility Tools', 'Tools used by some people as part of movement routines.'],
+      ['Stretching Equipment', 'Equipment for supported stretching movements.'],
+      ['Recovery Accessories', 'General recovery product category; no recovery outcome is guaranteed.'],
+    ],
+  },
+]
+
+const demoCommissionRows = [
+  { partner: 'Example gym partnership (fictional demo)', item: 'Membership referral', referrals: 8, commission: 1200 },
+  { partner: 'Example equipment listing (fictional demo)', item: 'Equipment category referral', referrals: 4, commission: 320 },
+]
 
 function formatMembershipDate(date) {
   if (!date) return 'No expiry'
@@ -137,6 +175,36 @@ export default function MembershipPage() {
           {membership.partnerActivationStatus === 'expired' && <p className="activation-status expired"><Clock3 size={15} /> Previous partner access expired {formatMembershipDate(membership.membershipExpiryDate)}</p>}
           {membership.partnerActivationStatus === 'superseded' && <p className="activation-status expired"><Clock3 size={15} /> Partner access was replaced when Premium started {formatMembershipDate(membership.membershipStartDate)}</p>}
         </form>
+      </section>
+
+      <section className="store-section" aria-labelledby="store-heading">
+        <div className="partnerships-intro"><p className="eyebrow">Membership &amp; store</p><h2 id="store-heading">Fitness products</h2><p>Browse product categories. No verified product links or prices are available in this demo.</p></div>
+        {productCategories.map(({ name, items }) => (
+          <section className="panel store-category" key={name} aria-label={name}>
+            <h3>{name}</h3>
+            <div className="store-product-grid">
+              {items.map(([product, description]) => (
+                <article className="store-product-card" key={product}>
+                  <span className="store-product-icon"><Dumbbell size={16} /></span>
+                  <div><h4>{product}</h4><p>{description}</p><small>Intended use: general category information · Indicative price: not listed · No verified external link</small></div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+        <section className="panel demo-commission-panel" aria-labelledby="demo-commission-heading">
+          <div className="nutrition-panel-heading"><div><p className="eyebrow">Illustrative sample data</p><h3 id="demo-commission-heading">Demo commission dashboard</h3></div><Activity size={18} /></div>
+          <p>These fictional examples are not real referrals, commissions, or earnings. Affiliate tracking and partner verification require external services.</p>
+          <div className="demo-commission-table">
+            <div className="demo-commission-row demo-commission-header"><span>Demo partner</span><span>Product / membership</span><span>Demo referrals</span><span>Demo commission</span></div>
+            {demoCommissionRows.map((row) => (
+              <div className="demo-commission-row" key={row.partner}>
+                <span>{row.partner}</span><span>{row.item}</span><span>{row.referrals}</span><span>₹{row.commission.toLocaleString('en-IN')}</span>
+              </div>
+            ))}
+          </div>
+          <strong className="demo-commission-total">Total demo earnings: ₹{demoCommissionRows.reduce((total, row) => total + row.commission, 0).toLocaleString('en-IN')} · Sample only</strong>
+        </section>
       </section>
 
       <section className="partnerships-section" id="partnerships" aria-labelledby="partnerships-heading">

@@ -10,6 +10,7 @@ import {
   getFitnessTrackerWorkoutMinutes,
   isFitnessTrackerRecord,
   normalizeFitnessTrackerRecords,
+  removeFitnessTrackerRecord,
 } from './fitnessTracker.js'
 
 function createStorage(values = {}) {
@@ -38,6 +39,14 @@ test('fitness records validate non-negative measurements and allow historical da
   assert.equal(isFitnessTrackerRecord({ ...record, date: '2026-02-30' }), false)
   assert.equal(isFitnessTrackerRecord({ id: 'empty', date: '2026-11-13', steps: null }), false)
   assert.equal(normalizeFitnessTrackerRecords([record, record]).length, 1)
+})
+
+test('deleting a fitness record removes only the requested valid entry', () => {
+  const first = createFitnessTrackerRecord({ id: 'first', date: '2026-11-13', steps: 1200 })
+  const second = createFitnessTrackerRecord({ id: 'second', date: '2026-11-13', steps: 800 })
+
+  assert.deepEqual(removeFitnessTrackerRecord([first, second], 'first'), [second])
+  assert.deepEqual(removeFitnessTrackerRecord([first, second], 'missing'), [first, second])
 })
 
 test('daily summaries total movement, average recorded heart rate, and preserve manual calories', () => {

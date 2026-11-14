@@ -49,6 +49,10 @@ export function normalizeFitnessTrackerRecords(saved) {
   })
 }
 
+export function removeFitnessTrackerRecord(records, recordId) {
+  return normalizeFitnessTrackerRecords(records).filter(({ id }) => id !== recordId)
+}
+
 export function createFitnessTrackerRecord({ id, date, ...measurements }) {
   return {
     id,

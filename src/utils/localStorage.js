@@ -54,6 +54,17 @@ export function migrateLegacyAccountData(userId, name) {
   const legacyPrefixes = [
     'fitlife.profile.v1',
     'fitlife.workouts.v1',
+    'fitlife.calorie-activities.v1',
+    'fitlife.equipment.v1',
+    'fitlife.fitness-tracker.v1',
+    'fitlife.food-intake.v1',
+    'fitlife.diet-preferences.v1',
+    'fitlife.diet-charts.v1',
+    'fitlife.diet-prices.v1',
+    'fitlife.nutrition-custom-ingredients.v1',
+    'fitlife.nutrition-recipes.v1',
+    'fitlife.membership.v1',
+    'fitlife.music-favorites.v1',
     'fitlife-water-intake',
     'fitlife-daily-habits',
     'fitlife.earned-badges.v1',
@@ -64,6 +75,8 @@ export function migrateLegacyAccountData(userId, name) {
     const keys = Object.keys(window.localStorage)
     for (const key of keys) {
       if (!legacyPrefixes.some((prefix) => key === prefix || key.startsWith(prefix))) continue
+      const accountKey = `fitlife.user.${userId}.${key}`
+      if (window.localStorage.getItem(accountKey) !== null) continue
       let value = window.localStorage.getItem(key)
       if (key === 'fitlife.profile.v1' && value) {
         const profile = JSON.parse(value)
@@ -71,7 +84,7 @@ export function migrateLegacyAccountData(userId, name) {
           value = JSON.stringify({ ...profile, name })
         }
       }
-      if (value !== null) window.localStorage.setItem(`fitlife.user.${userId}.${key}`, value)
+      if (value !== null) window.localStorage.setItem(accountKey, value)
     }
   } catch {
     return false

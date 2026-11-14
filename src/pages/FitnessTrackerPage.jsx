@@ -3,7 +3,7 @@ import { Activity, CalendarDays, Footprints, HeartPulse, Moon, Pencil, Plus, Tra
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Link } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
-import { FITNESS_MEASUREMENTS, createFitnessTrackerRecord, getFitnessTrackerDailySummary, getFitnessTrackerHistory, isFitnessTrackerRecord } from '../data/fitnessTracker.js'
+import { FITNESS_MEASUREMENTS, createFitnessTrackerRecord, getFitnessTrackerDailySummary, getFitnessTrackerHistory, isFitnessTrackerRecord, removeFitnessTrackerRecord } from '../data/fitnessTracker.js'
 import { formatDateKey, getTodayKey } from '../utils/date.js'
 import './FitnessTracker.css'
 
@@ -54,7 +54,7 @@ function HistoryChart({ history }) {
   )
 }
 
-function RecordForm({ records, selectedDate, onSave, saveError }) {
+function RecordForm({ records, selectedDate, onSave, onDelete, saveError }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [date, setDate] = useState(selectedDate)
   const [editingId, setEditingId] = useState('')
@@ -139,7 +139,7 @@ function RecordForm({ records, selectedDate, onSave, saveError }) {
             </div>
             <button type="button" className="fitness-row-button" aria-label={`Edit record from ${formatDateKey(record.date)}`} onClick={() => beginEdit(record)}><Pencil size={14} /></button>
             <button type="button" className="fitness-row-button delete" aria-label={`Delete record from ${formatDateKey(record.date)}`} onClick={() => {
-              if (!onSave(records.filter(({ id }) => id !== record.id))) setMessage('Unable to delete this record. Check browser storage and try again.')
+              if (!onDelete(record.id)) setMessage('Unable to delete this record. Check browser storage and try again.')
               else if (editingId === record.id) reset()
             }}><Trash2 size={14} /></button>
           </article>
@@ -160,6 +160,9 @@ export default function FitnessTrackerPage() {
       : [...fitnessTrackerRecords, record]
     return saveFitnessTrackerRecords(next)
   }
+  const deleteRecord = (recordId) => saveFitnessTrackerRecords(
+    removeFitnessTrackerRecord(fitnessTrackerRecords, recordId),
+  )
 
   return (
     <div className="page-content fitness-page">
@@ -184,7 +187,7 @@ export default function FitnessTrackerPage() {
       </section>
 
       <div className="fitness-content-grid">
-        <RecordForm key={selectedDate} records={fitnessTrackerRecords} selectedDate={selectedDate} onSave={saveRecord} saveError={fitnessTrackerStorageError} />
+        <RecordForm key={selectedDate} records={fitnessTrackerRecords} selectedDate={selectedDate} onSave={saveRecord} onDelete={deleteRecord} saveError={fitnessTrackerStorageError} />
         <HistoryChart history={history} />
       </div>
     </div>

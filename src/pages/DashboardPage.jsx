@@ -69,7 +69,7 @@ function ActivityPanel({ records, weekly, monthly }) {
   )
 }
 
-function TodayPanel({ today, fitness }) {
+function TodayPanel({ today, fitness, plannedMealCount }) {
   const waterProgress = Math.min(100, Math.round((today.waterMl / DAILY_WATER_GOAL_ML) * 100))
   return (
     <section className="panel" aria-labelledby="today-heading">
@@ -82,6 +82,7 @@ function TodayPanel({ today, fitness }) {
         <div className="summary-item"><span className="summary-icon"><Dumbbell size={16} /></span><span className="summary-copy"><strong>Today's workout</strong><span>Saved exercise completion</span></span><span className="summary-value">{today.completedWorkout ? 'Complete' : `${today.workoutPercent}%`}</span></div>
         <div className="summary-item"><span className="summary-icon"><Waves size={16} /></span><span className="summary-copy"><strong>Water intake</strong><span>{today.waterMl.toLocaleString()} of {DAILY_WATER_GOAL_ML.toLocaleString()} ml</span></span><span className="summary-value">{waterProgress}%</span></div>
         <div className="summary-item"><span className="summary-icon"><Check size={16} /></span><span className="summary-copy"><strong>Daily habits</strong><span>{today.completedHabits} of {today.totalHabits} completed</span></span><span className="summary-value">{today.habitPercent}%</span></div>
+        <div className="summary-item"><span className="summary-icon"><Flame size={16} /></span><span className="summary-copy"><strong>Diet plan</strong><span>Planned meals; food intake is logged separately</span></span><span className="summary-value">{plannedMealCount} selected</span></div>
       </div>
       <Link className="text-action" style={{ marginTop: 10 }} to="/calories">Open calorie tracker <ArrowRight size={13} /></Link>
       <Link className="text-action" style={{ marginTop: 8, marginLeft: 7 }} to="/fitness-tracker">Open fitness tracker <ArrowRight size={13} /></Link>
@@ -128,6 +129,8 @@ export default function DashboardPage() {
   })
   const fitnessToday = getFitnessTrackerDailySummary(fitnessTrackerRecords, getTodayKey())
   const todayKey = getTodayKey()
+  const todayMealPlan = readLocalJsonEntries('fitlife-diet-plan-')[todayKey] ?? {}
+  const plannedMealCount = Object.values(todayMealPlan).filter((mealId) => typeof mealId === 'string').length
   const today = progressRecords.find(({ date }) => date === todayKey) ?? {
     caloriesConsumedKcal: 0,
     caloriesBurnedKcal: 0,
@@ -158,7 +161,7 @@ export default function DashboardPage() {
         <div><p className="eyebrow">Your membership</p><h2>{membership.plan} plan</h2><p>{membership.membershipExpiryDate ? `${isMembershipExpired(membership) ? 'Expired' : 'Access until'} ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${membership.membershipExpiryDate}T00:00:00`))}` : 'Basic access with no expiry'}</p></div>
         <Link className="text-action" to="/membership">{membership.plan === 'Free' ? 'Upgrade to Premium' : 'Manage membership'} <ArrowRight size={13} /></Link>
       </section>
-      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} fitness={fitnessToday} /></div>
+      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} fitness={fitnessToday} plannedMealCount={plannedMealCount} /></div>
       <div className="lower-grid"><WorkoutPanel /><HydrationPanel /></div>
       <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Activity calories are estimates; fitness tracker calorie entries are manually entered. FitLife does not measure readings automatically.</p>
     </div>

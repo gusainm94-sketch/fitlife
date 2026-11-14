@@ -1,4 +1,5 @@
 #root { min-height: 100vh; }
+.route-loading { display: grid; min-height: 100vh; place-items: center; color: var(--muted); background: var(--canvas); font-size: 13px; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; display: flex; width: 252px; flex-direction: column; padding: 27px 17px 18px; color: #fff; background: var(--forest); }
 .brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 10px; color: #fff; }
@@ -1437,6 +1438,86 @@ html[data-theme='dark'] .redemption-input-row input { border-color: var(--line);
   .dashboard-membership > .text-action { margin-left: 0; }
 }
 
+.diet-settings-panel, .diet-chart-panel, .diet-history-panel { margin-top: 14px; }
+.diet-settings-panel > summary { display: flex; min-height: 28px; align-items: center; justify-content: space-between; gap: 12px; color: var(--ink); font-size: 11px; font-weight: 650; cursor: pointer; list-style: none; }
+.diet-settings-panel > summary::-webkit-details-marker { display: none; }
+.diet-settings-panel > summary > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+.diet-settings-panel[open] > summary { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.diet-settings-summary, .diet-profile-summary { color: var(--muted); font-size: 9px; font-weight: 450; }
+.diet-settings-content { padding-top: 12px; }
+.diet-profile-summary { margin: 0 0 12px; line-height: 1.6; }
+.diet-settings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.diet-settings-wide { grid-column: 1 / -1; }
+.diet-food-picker { min-width: 0; margin: 15px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.diet-food-picker legend { padding: 0 5px; color: var(--ink); font-size: 10px; font-weight: 650; }
+.diet-food-chip-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.diet-food-chip-wrap { display: inline-flex; align-items: center; gap: 2px; }
+.diet-food-chip, .diet-food-remove { min-height: 31px; border: 1px solid var(--line); color: var(--muted); background: var(--surface); cursor: pointer; }
+.diet-food-chip { padding: 0 9px; border-radius: 7px; font-size: 9px; }
+.diet-food-chip.selected { border-color: #8eb99a; color: #326b46; background: var(--mint); }
+.diet-food-remove { display: grid; width: 25px; place-items: center; border-radius: 6px; }
+.diet-add-food-form { display: flex; align-items: flex-end; gap: 9px; margin-top: 12px; }
+.diet-add-food-form .nutrition-field { width: min(100%, 300px); }
+.diet-settings-note, .diet-estimate-disclaimer { display: flex; align-items: flex-start; gap: 7px; margin: 12px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.diet-settings-note svg, .diet-estimate-disclaimer svg { flex: 0 0 auto; margin-top: 1px; }
+.diet-chart-panel > .nutrition-panel-heading > svg { flex: 0 0 auto; color: var(--emerald); }
+.diet-chart-intro { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.diet-chart-intro p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.diet-chart-intro strong { color: var(--ink); }
+.diet-chart-editor { display: grid; gap: 12px; margin-top: 14px; }
+.diet-chart-meal-list { display: grid; gap: 9px; }
+.diet-chart-meal { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+.diet-chart-meal-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.diet-chart-meal-heading > div { display: grid; min-width: 0; gap: 4px; }
+.diet-chart-meal-heading span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 9px; }
+.diet-chart-meal-heading strong { color: var(--ink); font-size: 11px; }
+.diet-chart-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .35fr); gap: 10px; margin-top: 10px; }
+.diet-chart-nutrients { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 0; }
+.diet-chart-nutrients > div { min-width: 0; padding: 8px; border-radius: 7px; background: var(--canvas); }
+.diet-chart-nutrients dt { color: var(--muted); font-size: 8px; }
+.diet-chart-nutrients dd { margin: 4px 0 0; color: var(--ink); font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
+.diet-chart-cost { margin: 8px 0 0; color: var(--muted); font-size: 9px; }
+.diet-add-meal-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.diet-add-meal-actions .nutrition-secondary-button { min-height: 33px; font-size: 9px; }
+.diet-ingredient-cost-list { display: grid; gap: 5px; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--line); list-style: none; }
+.diet-ingredient-cost-list li { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.diet-ingredient-cost-list li span { min-width: 0; overflow-wrap: anywhere; }
+.diet-affordable-alternatives { margin: 8px 0 0; color: var(--emerald); font-size: 9px; line-height: 1.5; }
+.diet-chart-totals { padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: color-mix(in srgb, var(--mint) 30%, var(--surface)); }
+.diet-chart-totals h3 { margin: 0; color: var(--ink); font-size: 11px; }
+.diet-chart-totals > p { margin: 9px 0 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.diet-chart-totals > p strong { color: var(--ink); }
+.diet-prices-details { padding-top: 11px; border-top: 1px solid var(--line); }
+.diet-prices-details > summary { color: var(--ink); font-size: 10px; font-weight: 650; cursor: pointer; }
+.diet-prices-details > p { margin: 8px 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.diet-prices-details a { color: var(--emerald); text-decoration: underline; }
+.diet-price-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.diet-price-list > label { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font-size: 9px; }
+.diet-price-list > label > span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); white-space: nowrap; }
+.diet-price-list input { width: 84px; height: 32px; padding: 0 7px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--canvas); font-size: 10px; }
+.diet-history-list { display: grid; gap: 8px; margin-top: 12px; }
+.diet-history-row { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.diet-history-row > div { min-width: 0; }
+.diet-history-row strong { color: var(--ink); font-size: 10px; }
+.diet-history-row p, .diet-history-empty { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.store-section { display: grid; gap: 12px; margin-top: 24px; }
+.store-section .partnerships-intro { margin-bottom: 0; }
+.store-category { padding: 16px; }
+.store-category h3 { margin: 0 0 11px; color: var(--ink); font-size: 12px; }
+.store-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.store-product-card { display: flex; min-width: 0; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.store-product-icon { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border-radius: 8px; color: var(--emerald); background: var(--mint); }
+.store-product-card h4 { margin: 0; color: var(--ink); font-size: 10px; }
+.store-product-card p { margin: 4px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.store-product-card small { color: var(--muted); font-size: 8px; line-height: 1.4; }
+.demo-commission-panel > .nutrition-panel-heading h3 { margin: 0; color: var(--ink); font-size: 12px; }
+.demo-commission-panel > p { margin: 8px 0 12px; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.demo-commission-table { overflow-x: auto; }
+.demo-commission-row { display: grid; min-width: 650px; grid-template-columns: minmax(190px, 1.5fr) minmax(150px, 1.2fr) minmax(100px, .7fr) minmax(120px, .8fr); gap: 8px; padding: 9px 8px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 9px; }
+.demo-commission-row span { overflow-wrap: anywhere; }
+.demo-commission-header { color: var(--muted); font-size: 8px; font-weight: 650; }
+.demo-commission-total { display: block; margin-top: 11px; color: var(--ink); font-size: 10px; }
+
 html[data-theme='dark'] .profile-injury-field { color: var(--ink); }
 html[data-theme='dark'] .profile-injury-option {
   border-color: var(--line);
@@ -1466,7 +1547,25 @@ html[data-theme='dark'] .workout-medical-disclaimer small {
 html[data-theme='dark'] .workout-medical-disclaimer > svg {
   color: #e0ba68;
 }
+html[data-theme='dark'] .diet-food-chip.selected,
+html[data-theme='dark'] .diet-affordable-alternatives { color: #a7d8af; }
 
+@media (max-width: 760px) {
+  .diet-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diet-settings-wide { grid-column: 1 / -1; }
+  .diet-chart-intro { align-items: flex-start; flex-direction: column; }
+  .store-product-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .diet-settings-grid, .diet-price-list { grid-template-columns: 1fr; }
+  .diet-settings-wide { grid-column: auto; }
+  .diet-settings-panel > summary { align-items: flex-start; flex-direction: column; }
+  .diet-add-food-form { align-items: stretch; flex-direction: column; }
+  .diet-add-food-form .nutrition-field { width: 100%; }
+  .diet-chart-controls { grid-template-columns: 1fr; }
+  .diet-chart-nutrients { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diet-history-row { align-items: flex-start; }
+}
 @media (max-width: 760px) {
   .main-area { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   .mobile-nav {

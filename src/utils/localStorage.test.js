@@ -80,3 +80,37 @@ test('first account migration copies existing fitness data and applies the signu
     delete globalThis.window
   }
 })
+
+test('legacy migration includes tracker, nutrition, membership, and music data without overwriting account values', () => {
+  const storage = createStorage({
+    'fitlife.calorie-activities.v1': JSON.stringify([{ id: 'legacy-activity' }]),
+    'fitlife.diet-charts.v1': JSON.stringify([{ id: 'legacy-chart' }]),
+    'fitlife.diet-preferences.v1': JSON.stringify({ mealsPerDay: 4 }),
+    'fitlife.diet-prices.v1': JSON.stringify({ 'meal:poha': 20 }),
+    'fitlife.music-favorites.v1': JSON.stringify(['playlist-1']),
+    'fitlife.nutrition-recipes.v1': JSON.stringify([{ id: 'legacy-recipe' }]),
+    'fitlife.membership.v1': JSON.stringify({ plan: 'Premium' }),
+    'fitlife.user.account-a.fitlife.diet-charts.v1': JSON.stringify([{ id: 'account-chart' }]),
+    'fitlife.user.account-a.fitlife.music-favorites.v1': JSON.stringify(['account-playlist']),
+  })
+  globalThis.window = { localStorage: storage }
+
+  try {
+    assert.equal(migrateLegacyAccountData('account-a', 'Taylor'), true)
+    assert.equal(storage['fitlife.user.account-a.fitlife.calorie-activities.v1'], storage['fitlife.calorie-activities.v1'])
+    assert.equal(storage['fitlife.user.account-a.fitlife.nutrition-recipes.v1'], storage['fitlife.nutrition-recipes.v1'])
+    assert.equal(storage['fitlife.user.account-a.fitlife.diet-preferences.v1'], storage['fitlife.diet-preferences.v1'])
+    assert.equal(storage['fitlife.user.account-a.fitlife.diet-prices.v1'], storage['fitlife.diet-prices.v1'])
+    assert.equal(storage['fitlife.user.account-a.fitlife.membership.v1'], storage['fitlife.membership.v1'])
+    assert.deepEqual(
+      JSON.parse(storage['fitlife.user.account-a.fitlife.diet-charts.v1']),
+      [{ id: 'account-chart' }],
+    )
+    assert.deepEqual(
+      JSON.parse(storage['fitlife.user.account-a.fitlife.music-favorites.v1']),
+      ['account-playlist'],
+    )
+  } finally {
+    delete globalThis.window
+  }
+})

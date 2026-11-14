@@ -22,8 +22,8 @@
 }
 
 * { box-sizing: border-box; }
-html { min-width: 320px; min-height: 100%; }
-body { min-width: 320px; min-height: 100vh; margin: 0; }
+html { min-height: 100%; }
+body { min-height: 100vh; margin: 0; }
 body { color: var(--ink); background: var(--canvas); }
 button, input { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }

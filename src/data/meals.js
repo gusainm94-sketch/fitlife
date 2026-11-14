@@ -1,5 +1,6 @@
 export const MEAL_CATEGORIES = [
   { id: 'breakfast', name: 'Breakfast', description: 'A nourishing start to your day' },
+  { id: 'morning-snacks', name: 'Morning Snack', description: 'A small bite between breakfast and lunch' },
   { id: 'lunch', name: 'Lunch', description: 'A satisfying midday meal' },
   { id: 'evening-snacks', name: 'Evening Snacks', description: 'A little something between meals' },
   { id: 'dinner', name: 'Dinner', description: 'A comforting end to your day' },
@@ -10,6 +11,8 @@ export const INDIAN_MEALS = [
   { id: 'idli-sambar', name: 'Idli & sambar', description: 'Steamed rice cakes served with lentil and vegetable sambar.', calories: 300, category: 'breakfast', type: 'veg' },
   { id: 'paneer-paratha', name: 'Paneer paratha', description: 'Whole-wheat flatbread stuffed with spiced paneer and curd.', calories: 420, category: 'breakfast', type: 'veg' },
   { id: 'masala-omelette', name: 'Masala omelette', description: 'Eggs with tomato, onion and coriander, served with whole-wheat toast.', calories: 320, category: 'breakfast', type: 'non-veg' },
+  { id: 'fruit-bowl', name: 'Seasonal fruit bowl', description: 'A simple bowl of available seasonal fruit.', calories: null, category: 'morning-snacks', type: 'veg' },
+  { id: 'curd-fruit', name: 'Curd with fruit', description: 'Plain curd with fruit, if it suits your preference.', calories: null, category: 'morning-snacks', type: 'veg' },
   { id: 'rajma-chawal', name: 'Rajma chawal', description: 'Kidney bean curry with steamed rice and a side of cucumber.', calories: 520, category: 'lunch', type: 'veg' },
   { id: 'veg-thali', name: 'Everyday veg thali', description: 'Dal, seasonal sabzi, two rotis, rice and a little salad.', calories: 560, category: 'lunch', type: 'veg' },
   { id: 'paneer-tikka-bowl', name: 'Paneer tikka bowl', description: 'Tandoori paneer, brown rice, crunchy vegetables and mint chutney.', calories: 540, category: 'lunch', type: 'veg' },

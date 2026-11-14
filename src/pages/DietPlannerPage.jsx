@@ -17,6 +17,9 @@ import {
 } from '../data/foodIntake.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { getTodayKey } from '../utils/date.js'
+import { useAppData } from '../hooks/useAppData.js'
+import DietPlanningTools from './DietPlanningTools.jsx'
+import { DIET_PREFERENCES_STORAGE_KEY, isMealAllowed, matchingAvailableFoods, normalizeDietPreferences, prioritizeMealsForGoal } from '../data/dietPlanning.js'
 
 const FILTERS = [
   { id: 'all', label: 'All meals' },
@@ -46,6 +49,11 @@ function MealCard({ meal, selected, onToggle }) {
 }
 
 export default function DietPlannerPage() {
+  const { profile, updateProfile } = useAppData()
+  const [preferences, setPreferences] = useState(() => normalizeDietPreferences(
+    readLocalJson(DIET_PREFERENCES_STORAGE_KEY, null),
+    profile,
+  ))
   const [mealPlan, setMealPlan] = useState(() => {
     const storageKey = getTodayMealStorageKey()
     return { storageKey, selectedMeals: readMealPlan(storageKey) }
@@ -55,7 +63,16 @@ export default function DietPlannerPage() {
   const [customIngredients] = useState(() => normalizeCustomIngredients(readLocalJson(CUSTOM_INGREDIENTS_STORAGE_KEY, [])))
   const [foodIntake, setFoodIntake] = useState(() => normalizeFoodIntake(readLocalJson(FOOD_INTAKE_STORAGE_KEY, [])))
   const [logMessages, setLogMessages] = useState({})
+  const [selectionMessage, setSelectionMessage] = useState('')
   const { selectedMeals } = mealPlan
+  const dietPreferences = { ...preferences, dietPreference: profile.dietPreference, fitnessGoal: profile.goal }
+
+  function updatePreferences(nextPreferences) {
+    const normalized = normalizeDietPreferences(nextPreferences, profile)
+    if (!writeLocalJson(DIET_PREFERENCES_STORAGE_KEY, normalized)) return false
+    setPreferences(normalized)
+    return true
+  }
 
   useEffect(() => {
     writeLocalJson(mealPlan.storageKey, mealPlan.selectedMeals)
@@ -84,7 +101,7 @@ export default function DietPlannerPage() {
       id: `recipe:${recipe.id}`,
       recipeId: recipe.id,
       name: recipe.name,
-      description: `Saved recipe · ${recipe.ingredients.length} ingredients`,
+      description: `Saved recipe · ${calculateNutrition(recipe.ingredients, customIngredients).rows.map(({ ingredient }) => ingredient?.name).filter(Boolean).join(', ')}`,
       calories: totals.caloriesKcal,
       category: 'recipe',
       type: recipe.type === 'non-veg' ? 'non-veg' : 'veg',
@@ -96,17 +113,30 @@ export default function DietPlannerPage() {
     const meals = [...INDIAN_MEALS, ...recipeMeals]
     return meals.filter((meal) => (
       meal.category === category.id || meal.category === 'recipe'
-    )).filter((meal) => selectedMeals[category.id] === meal.id).slice(0, 1)
+    )).filter((meal) => selectedMeals[category.id] === meal.id)
+      .filter((meal) => isMealAllowed(meal, dietPreferences, recipes, customIngredients)).slice(0, 1)
   })
   const calorieTotal = selectedMealList.reduce((total, meal) => total + (meal.calories ?? 0), 0)
   const hasUnknownCalories = selectedMealList.some(({ calories }) => !Number.isFinite(calories))
 
   function getMealsForCategory(categoryId) {
-    return [...INDIAN_MEALS.filter((meal) => meal.category === categoryId), ...recipeMeals]
+    const candidates = [...INDIAN_MEALS.filter((meal) => meal.category === categoryId), ...recipeMeals]
+    const safeCandidates = candidates.filter((meal) => isMealAllowed(meal, dietPreferences, recipes, customIngredients))
+    const availableCandidates = safeCandidates.filter((meal) => matchingAvailableFoods(meal, dietPreferences, recipes, customIngredients))
+    const prioritized = dietPreferences.selectedFoods.length && availableCandidates.length
+      ? [...availableCandidates, ...safeCandidates.filter((meal) => !availableCandidates.includes(meal))]
+      : safeCandidates
+    return prioritizeMealsForGoal(prioritized, profile.goal, recipes, customIngredients)
       .filter((meal) => filter === 'all' || meal.type === filter)
   }
 
   function toggleMeal(category, meal) {
+    const alreadySelected = selectedMeals[category] === meal.id
+    const selectedCount = Object.values(selectedMeals).filter((value) => typeof value === 'string').length
+    if (!alreadySelected && selectedCount >= preferences.mealsPerDay) {
+      setSelectionMessage(`Your preference is ${preferences.mealsPerDay} meals per day. Remove a selected meal before adding another.`)
+      return
+    }
     setMealPlan((current) => ({
       ...current,
       selectedMeals: {
@@ -114,6 +144,7 @@ export default function DietPlannerPage() {
         [category]: current.selectedMeals[category] === meal.id ? undefined : meal.id,
       },
     }))
+    setSelectionMessage('')
     setLogMessages((current) => ({ ...current, [category]: '' }))
   }
 
@@ -178,8 +209,12 @@ export default function DietPlannerPage() {
         <div className="diet-filter-group" role="group" aria-label="Filter meals by type">
           {FILTERS.map((option) => <button key={option.id} className={filter === option.id ? 'active' : ''} type="button" aria-pressed={filter === option.id} onClick={() => setFilter(option.id)}>{option.id === 'veg' && <Leaf size={14} />}{option.label}</button>)}
         </div>
-        <p><Utensils size={14} /> {selectedMealList.length} of {MEAL_CATEGORIES.length} meals selected <Link className="diet-calculator-link" to="/nutrition-calculator">Nutrition calculator <ArrowRight size={12} /></Link></p>
+        <p><Utensils size={14} /> {selectedMealList.length} of {MEAL_CATEGORIES.length} meals selected
+          {preferences.dailyBudget !== null && <> · Budget ₹{preferences.dailyBudget}/day</>}
+          <Link className="diet-calculator-link" to="/nutrition-calculator">Nutrition calculator <ArrowRight size={12} /></Link>
+        </p>
       </section>
+      {selectionMessage && <p className="nutrition-message error" role="alert">{selectionMessage}</p>}
 
       <div className="diet-category-list">
         {MEAL_CATEGORIES.map((category, index) => {
@@ -194,15 +229,15 @@ export default function DietPlannerPage() {
             <section className="panel diet-category-panel" key={category.id} aria-labelledby={`diet-${category.id}`}>
               <div className="diet-category-heading">
                 <span className="diet-category-number">0{index + 1}</span>
-                <div><h2 id={`diet-${category.id}`}>{category.name}</h2><p>{category.description}</p></div>
+                <div><h2 id={`diet-${category.id}`}>{category.name}</h2><p>{category.description} · {preferences.mealTimings[category.id]}</p></div>
                 {chosenMeal && <span className="diet-picked-badge"><Check size={12} /> {Number.isFinite(chosenMeal.calories) ? `~${chosenMeal.calories} kcal planned` : 'Nutrition unavailable'}</span>}
               </div>
               <div className="diet-meal-grid">
                 {meals.map((meal) => <MealCard key={meal.id} meal={meal} selected={selectedMeals[category.id] === meal.id} onToggle={() => toggleMeal(category.id, meal)} />)}
               </div>
               {hasMissingSelection
-                ? <p className="diet-category-hint diet-missing-recipe"><CircleAlert size={13} /> A recipe in this saved plan is no longer available. <button type="button" onClick={() => clearMissingMeal(category.id)}>Remove it from today's plan</button></p>
-                : <p className="diet-category-hint">{chosenMeal ? `${chosenMeal.name} added to today's plan` : 'Choose one option for this meal'}</p>}
+                ? <p className="diet-category-hint diet-missing-recipe"><CircleAlert size={13} /> This saved choice is unavailable or conflicts with current preferences. <button type="button" onClick={() => clearMissingMeal(category.id)}>Remove it from today's plan</button></p>
+                : <p className="diet-category-hint">{chosenMeal ? `${chosenMeal.name} added to today's plan` : 'Choose one option for this meal'}{preferences.selectedFoods.length ? ' · Options matching available foods appear first; other safe options are alternatives.' : ''}</p>}
               {chosenMeal?.recipeId && (
                 <div className="diet-recipe-log">
                   <button className="diet-log-button" type="button" disabled={loggedToday} onClick={() => logRecipeMeal(category.id, chosenMeal)}>{loggedToday ? 'Already logged today' : 'Log this meal as eaten'}</button>
@@ -213,7 +248,13 @@ export default function DietPlannerPage() {
           )
         })}
       </div>
-      <p className="diet-disclaimer">Sample meal calories are approximate estimates for sample portions. Saved recipe calories are based on their ingredient calculator and are added to intake only when explicitly logged as eaten.</p>
+      <p className="diet-disclaimer">Sample meal calories are approximate estimates for sample portions. Goal-aware ordering uses only available approximate calorie values; it does not prescribe calorie targets or medical diets. Saved recipe calories are based on their ingredient calculator and are added to intake only when explicitly logged as eaten.</p>
+      <DietPlanningTools
+        profile={profile}
+        preferences={dietPreferences}
+        onUpdatePreferences={updatePreferences}
+        onUpdateProfile={updateProfile}
+      />
     </div>
   )
 }
