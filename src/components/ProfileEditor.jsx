@@ -166,9 +166,10 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
               {SMOKING_STATUSES.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
-          <label className="profile-field"><span className="profile-label-row">Smartwatch available? <span className="profile-optional-label">Optional</span></span>
+          <label className="profile-field"><span className="profile-label-row">Fitness tracking device <span className="profile-optional-label">Optional</span></span>
             <select name="smartwatchAvailability" value={form.smartwatchAvailability} onChange={updateField}>
               <option value="">Not specified</option>
+              {!SMARTWATCH_OPTIONS.includes(form.smartwatchAvailability) && form.smartwatchAvailability && <option value={form.smartwatchAvailability}>{form.smartwatchAvailability}</option>}
               {SMARTWATCH_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>

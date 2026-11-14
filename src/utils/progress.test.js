@@ -103,6 +103,20 @@ test('daily progress includes saved calorie estimates once and preserves days wi
     ],
   })
 
+  test('fitness tracker workout minutes appear separately from planned workout completion', () => {
+    const records = buildDailyProgressRecords({
+      fitnessTrackerRecords: [
+        { date: '2026-11-13', workoutMinutes: 45 },
+        { date: '2026-11-13', workoutMinutes: 15 },
+      ],
+    })
+
+    assert.equal(records.length, 1)
+    assert.equal(records[0].fitnessTrackerWorkoutMinutes, 60)
+    assert.equal(records[0].completedWorkout, false)
+    assert.equal(records[0].workoutPercent, 0)
+  })
+
   assert.deepEqual(records.map(({ date, caloriesBurnedKcal }) => [date, caloriesBurnedKcal]), [
     ['2026-11-09', 125],
     ['2026-11-10', 0],

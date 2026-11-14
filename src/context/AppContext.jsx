@@ -11,6 +11,11 @@ import {
   normalizeCalorieActivities,
   updateCalorieActivityDurationRecord,
 } from '../data/calories.js'
+import {
+  FITNESS_TRACKER_STORAGE_KEY,
+  getFitnessTrackerCalorieActivities,
+  normalizeFitnessTrackerRecords,
+} from '../data/fitnessTracker.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
@@ -60,15 +65,23 @@ export function AppProvider({ children, user }) {
     normalizeCalorieActivities(readLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, []))
   ))
   const [calorieStorageError, setCalorieStorageError] = useState(false)
+  const [fitnessTrackerRecords, setFitnessTrackerRecords] = useState(() => (
+    normalizeFitnessTrackerRecords(readLocalJson(FITNESS_TRACKER_STORAGE_KEY, []))
+  ))
+  const [fitnessTrackerStorageError, setFitnessTrackerStorageError] = useState(false)
   const [equipmentPreferences, setEquipmentPreferences] = useState(() => (
     normalizeEquipmentPreferences(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null))
   ))
   const [equipmentStorageError, setEquipmentStorageError] = useState(false)
   const dashboardStats = DASHBOARD_STATS
-  const calorieActivities = useMemo(() => mergeCalorieActivities(
+  const baseCalorieActivities = useMemo(() => mergeCalorieActivities(
     savedCalorieActivities,
     getCompletedWorkoutCalorieActivities(workoutProgress, getProfileCalorieWeight(profile)),
   ), [profile, savedCalorieActivities, workoutProgress])
+  const calorieActivities = useMemo(() => mergeCalorieActivities(
+    baseCalorieActivities,
+    getFitnessTrackerCalorieActivities(fitnessTrackerRecords),
+  ), [baseCalorieActivities, fitnessTrackerRecords])
 
   useEffect(() => {
     if (profile !== initialProfile.current) return
@@ -86,16 +99,16 @@ export function AppProvider({ children, user }) {
   }, [workoutProgress])
 
   useEffect(() => {
-    if (calorieActivities.length === savedCalorieActivities.length) return
-    if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, calorieActivities)) {
+    if (baseCalorieActivities.length === savedCalorieActivities.length) return
+    if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, baseCalorieActivities)) {
       console.error('FitLife could not save calorie activity history. Check browser storage availability.')
     }
-  }, [calorieActivities, savedCalorieActivities.length])
+  }, [baseCalorieActivities, savedCalorieActivities.length])
 
   const addCalorieActivity = useCallback((activity) => {
     if (!isCalorieActivity(activity)) return false
-    const next = mergeCalorieActivities(calorieActivities, [activity])
-    if (next.length === calorieActivities.length) return false
+    const next = mergeCalorieActivities(baseCalorieActivities, [activity])
+    if (next.length === baseCalorieActivities.length) return false
     if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, next)) {
       setCalorieStorageError(true)
       return false
@@ -103,14 +116,14 @@ export function AppProvider({ children, user }) {
     setSavedCalorieActivities(next)
     setCalorieStorageError(false)
     return true
-  }, [calorieActivities])
+  }, [baseCalorieActivities])
 
   const updateCalorieActivityDuration = useCallback((id, durationMinutes) => {
     if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return false
-    const current = calorieActivities.find((activity) => activity.id === id)
+    const current = baseCalorieActivities.find((activity) => activity.id === id)
     if (!current) return false
     const updated = updateCalorieActivityDurationRecord(current, durationMinutes)
-    const next = calorieActivities.map((activity) => activity.id === id ? updated : activity)
+    const next = baseCalorieActivities.map((activity) => activity.id === id ? updated : activity)
     if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, next)) {
       setCalorieStorageError(true)
       return false
@@ -118,7 +131,18 @@ export function AppProvider({ children, user }) {
     setSavedCalorieActivities(next)
     setCalorieStorageError(false)
     return true
-  }, [calorieActivities])
+  }, [baseCalorieActivities])
+
+  const saveFitnessTrackerRecords = useCallback((records) => {
+    const next = normalizeFitnessTrackerRecords(records)
+    if (!writeLocalJson(FITNESS_TRACKER_STORAGE_KEY, next)) {
+      setFitnessTrackerStorageError(true)
+      return false
+    }
+    setFitnessTrackerRecords(next)
+    setFitnessTrackerStorageError(false)
+    return true
+  }, [])
 
   const updateProfile = useCallback((nextProfile) => {
     const updatedProfile = normalizeProfile({ ...profile, ...nextProfile }, user.name)
@@ -186,7 +210,10 @@ export function AppProvider({ children, user }) {
     addCalorieActivity,
     updateCalorieActivityDuration,
     calorieStorageError,
-  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError])
+    fitnessTrackerRecords,
+    saveFitnessTrackerRecords,
+    fitnessTrackerStorageError,
+  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError, fitnessTrackerRecords, saveFitnessTrackerRecords, fitnessTrackerStorageError])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

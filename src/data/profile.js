@@ -38,7 +38,14 @@ export const FITNESS_LEVELS = ['Beginner', 'Intermediate', 'Advanced']
 export const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say']
 export const DIET_PREFERENCES = ['Vegetarian', 'Non-Vegetarian', 'Eggetarian', 'Vegan']
 export const SMOKING_STATUSES = ['Non-Smoker', 'Current Smoker', 'Former Smoker', 'Prefer not to say']
-export const SMARTWATCH_OPTIONS = ['Yes', 'No']
+export const SMARTWATCH_OPTIONS = [
+  'Apple Watch',
+  'Wear OS Smartwatch',
+  'Fitbit',
+  'Garmin',
+  'Other',
+  'No Smartwatch',
+]
 export const AVATAR_OPTIONS = [
   { id: 'male', label: 'Male avatar' },
   { id: 'female', label: 'Female avatar' },
@@ -88,7 +95,10 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
     fitnessLevel: normalizeOptionalChoice(saved.fitnessLevel, FITNESS_LEVELS, DEFAULT_PROFILE.fitnessLevel),
     dietPreference: normalizeOptionalChoice(saved.dietPreference, DIET_PREFERENCES),
     smokingStatus: normalizeOptionalChoice(saved.smokingStatus, SMOKING_STATUSES),
-    smartwatchAvailability: normalizeOptionalChoice(saved.smartwatchAvailability, SMARTWATCH_OPTIONS),
+    smartwatchAvailability: normalizeOptionalChoice(
+      saved.smartwatchAvailability,
+      [...SMARTWATCH_OPTIONS, 'Yes', 'No'],
+    ),
     injuryAreas: Array.isArray(saved.injuryAreas)
       ? [...new Set(saved.injuryAreas.filter((area) => INJURY_AREAS.includes(area)))]
       : [],

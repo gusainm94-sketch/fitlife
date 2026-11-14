@@ -1,4 +1,4 @@
-import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, Check, Clock3, Dumbbell, Flame, Sparkles, Target, Waves } from 'lucide-react'
+import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, Check, Clock3, Dumbbell, Flame, Footprints, Sparkles, Target, Waves } from 'lucide-react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Link } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
@@ -19,6 +19,7 @@ import { useMembership } from '../hooks/useMembership.js'
 import { readLocalJsonEntries } from '../utils/localStorage.js'
 import { buildDailyProgressRecords, getProgressPeriodSummary, getWeekDateKeys, getWeekId } from '../utils/progress.js'
 import { WEEKDAYS } from '../data/workouts.js'
+import { getFitnessTrackerDailySummary } from '../data/fitnessTracker.js'
 
 const statIcons = {
   'Calories consumed': Flame,
@@ -67,19 +68,22 @@ function ActivityPanel({ records, weekly, monthly }) {
   )
 }
 
-function TodayPanel({ today }) {
+function TodayPanel({ today, fitness }) {
   const waterProgress = Math.min(100, Math.round((today.waterMl / DAILY_WATER_GOAL_ML) * 100))
   return (
     <section className="panel" aria-labelledby="today-heading">
       <div className="panel-heading"><div><h2 id="today-heading">Today at a glance</h2><p>A little progress goes a long way</p></div><span className="stat-icon"><Target size={16} /></span></div>
       <div className="today-summary">
         <div className="summary-item"><span className="summary-icon"><Flame size={16} /></span><span className="summary-copy"><strong>Calories consumed</strong><span>Estimate from selected meals</span></span><span className="summary-value">{today.caloriesConsumedKcal.toLocaleString()} kcal</span></div>
-        <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Estimated calories burned</strong><span>{today.caloriesBurnedKcal ? 'MET-based estimates from your activity log' : 'No activity estimate recorded yet'}</span></span><span className="summary-value">{today.caloriesBurnedKcal.toLocaleString()} kcal</span></div>
+        <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Calories burned</strong><span>{fitness.caloriesReadings ? 'Includes manually entered fitness tracker calories' : today.caloriesBurnedKcal ? 'MET-based estimates from your activity log' : 'No activity estimate recorded yet'}</span></span><span className="summary-value">{today.caloriesBurnedKcal.toLocaleString()} kcal</span></div>
+        <div className="summary-item"><span className="summary-icon"><Footprints size={16} /></span><span className="summary-copy"><strong>Manual tracker steps</strong><span>Fitness tracker entry for today</span></span><span className="summary-value">{fitness.stepsReadings ? fitness.steps.toLocaleString() : '—'}</span></div>
+        <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Manual active minutes</strong><span>Fitness tracker entry for today</span></span><span className="summary-value">{fitness.activeMinutesReadings ? `${fitness.activeMinutes.toLocaleString()} min` : '—'}</span></div>
         <div className="summary-item"><span className="summary-icon"><Dumbbell size={16} /></span><span className="summary-copy"><strong>Today's workout</strong><span>Saved exercise completion</span></span><span className="summary-value">{today.completedWorkout ? 'Complete' : `${today.workoutPercent}%`}</span></div>
         <div className="summary-item"><span className="summary-icon"><Waves size={16} /></span><span className="summary-copy"><strong>Water intake</strong><span>{today.waterMl.toLocaleString()} of {DAILY_WATER_GOAL_ML.toLocaleString()} ml</span></span><span className="summary-value">{waterProgress}%</span></div>
         <div className="summary-item"><span className="summary-icon"><Check size={16} /></span><span className="summary-copy"><strong>Daily habits</strong><span>{today.completedHabits} of {today.totalHabits} completed</span></span><span className="summary-value">{today.habitPercent}%</span></div>
       </div>
       <Link className="text-action" style={{ marginTop: 10 }} to="/calories">Open calorie tracker <ArrowRight size={13} /></Link>
+      <Link className="text-action" style={{ marginTop: 8, marginLeft: 7 }} to="/fitness-tracker">Open fitness tracker <ArrowRight size={13} /></Link>
     </section>
   )
 }
@@ -107,7 +111,7 @@ function HydrationPanel() {
 }
 
 export default function DashboardPage() {
-  const { profile, workoutProgress, calorieActivities } = useAppData()
+  const { profile, workoutProgress, calorieActivities, fitnessTrackerRecords } = useAppData()
   const { membership } = useMembership()
   const { history: waterHistory } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
   const { history: habitHistory } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
@@ -118,7 +122,9 @@ export default function DashboardPage() {
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
     workoutProgress,
     calorieHistory: calorieActivities,
+    fitnessTrackerRecords,
   })
+  const fitnessToday = getFitnessTrackerDailySummary(fitnessTrackerRecords, getTodayKey())
   const todayKey = getTodayKey()
   const today = progressRecords.find(({ date }) => date === todayKey) ?? {
     caloriesConsumedKcal: 0,
@@ -150,9 +156,9 @@ export default function DashboardPage() {
         <div><p className="eyebrow">Your membership</p><h2>{membership.plan} plan</h2><p>{membership.membershipExpiryDate ? `${isMembershipExpired(membership) ? 'Expired' : 'Access until'} ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${membership.membershipExpiryDate}T00:00:00`))}` : 'Basic access with no expiry'}</p></div>
         <Link className="text-action" to="/membership">{membership.plan === 'Free' ? 'Upgrade to Premium' : 'Manage membership'} <ArrowRight size={13} /></Link>
       </section>
-      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} /></div>
+      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} fitness={fitnessToday} /></div>
       <div className="lower-grid"><WorkoutPanel /><HydrationPanel /></div>
-      <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Activity calories are estimates from recorded durations and profile weight; FitLife does not measure them automatically.</p>
+      <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Activity calories are estimates; fitness tracker calorie entries are manually entered. FitLife does not measure readings automatically.</p>
     </div>
   )
 }

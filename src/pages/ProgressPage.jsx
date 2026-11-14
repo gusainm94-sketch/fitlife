@@ -59,7 +59,7 @@ function WeightVisualization({ weight, isSampleProfile }) {
 }
 
 export default function ProgressPage() {
-  const { profile, workoutProgress, calorieActivities } = useAppData()
+  const { profile, workoutProgress, calorieActivities, fitnessTrackerRecords } = useAppData()
   const { data: water, history: waterHistory } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
   const { data: habits, history: habitHistory } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
   const workouts = getWorkoutProgress(workoutProgress)
@@ -70,6 +70,7 @@ export default function ProgressPage() {
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
     workoutProgress,
     calorieHistory: calorieActivities,
+    fitnessTrackerRecords,
   })
   const weekStart = getWeekId()
   const monthStart = `${todayKey.slice(0, 7)}-01`
@@ -118,7 +119,7 @@ export default function ProgressPage() {
         {historyRows.length ? (
           <div className="progress-history-scroll">
             <table className="progress-history-table">
-              <thead><tr><th>Date</th><th>Meal estimate</th><th>Calories burned</th><th>Exercises</th><th>Workout</th><th>Water</th><th>Habits</th><th>Goals</th></tr></thead>
+              <thead><tr><th>Date</th><th>Meal estimate</th><th>Calories burned</th><th>Exercises</th><th>Workout</th><th>Tracker workout</th><th>Water</th><th>Habits</th><th>Goals</th></tr></thead>
               <tbody>{historyRows.map((row) => (
                 <tr key={row.date}>
                   <th scope="row">{formatDateKey(row.date)}</th>
@@ -126,6 +127,7 @@ export default function ProgressPage() {
                   <td>{row.caloriesBurnedKcal.toLocaleString()} kcal</td>
                   <td>{row.completedExercises}/{row.totalExercises}</td>
                   <td>{row.completedWorkout ? 'Complete' : `${row.workoutPercent}%`}</td>
+                  <td>{row.fitnessTrackerWorkoutMinutes === null ? '—' : `${row.fitnessTrackerWorkoutMinutes.toLocaleString()} min (manual)`}</td>
                   <td>{row.waterMl.toLocaleString()} ml</td>
                   <td>{row.completedHabits}/{row.totalHabits}</td>
                   <td>{row.completedGoals}/2</td>
@@ -134,7 +136,7 @@ export default function ProgressPage() {
             </table>
           </div>
         ) : <p className="progress-history-empty">Your saved daily records will appear here as you use FitLife.</p>}
-        <p className="progress-chart-note">Meal calories are estimates from selected meals. Burned calories include only saved activity estimates; no value is inferred when duration or weight is missing.</p>
+        <p className="progress-chart-note">Meal calories are estimates from selected meals. Burned calories combine saved activity estimates with manually entered fitness tracker calories; no value is inferred when duration or weight is missing.</p>
         <span className="visually-hidden">{currentRecord ? `Today's recorded meal estimate is ${currentRecord.caloriesConsumedKcal} kcal.` : 'No progress record is saved for today.'}</span>
       </section>
     </div>

@@ -90,18 +90,21 @@ export function estimateCaloriesBurned({ activity, durationMinutes, intensity, w
 }
 
 export function isCalorieActivity(record) {
+  const isSmartwatchEntry = record?.source === 'smartwatch'
   return Boolean(record)
     && typeof record.id === 'string'
     && record.id.length > 0
     && CALORIE_ACTIVITIES.includes(record.activity)
-    && Number.isFinite(record.durationMinutes)
-    && record.durationMinutes > 0
-    && EXERCISE_INTENSITIES.includes(record.intensity)
     && typeof record.date === 'string'
     && DATE_PATTERN.test(record.date)
     && (record.caloriesKcal === null || (Number.isFinite(record.caloriesKcal) && record.caloriesKcal >= 0))
     && (record.weightKg === null || isValidBodyWeight(record.weightKg))
-    && ['manual', 'workout'].includes(record.source)
+    && (isSmartwatchEntry
+      ? record.durationMinutes === null && record.intensity === null
+      : Number.isFinite(record.durationMinutes)
+        && record.durationMinutes > 0
+        && EXERCISE_INTENSITIES.includes(record.intensity)
+        && ['manual', 'workout'].includes(record.source))
     && (record.activityName === undefined || typeof record.activityName === 'string')
 }
 

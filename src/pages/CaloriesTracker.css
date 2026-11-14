@@ -52,6 +52,7 @@
 .calorie-source-badge { padding: 3px 6px; border-radius: 20px; font-size: 8px; font-weight: 650; }
 .calorie-source-badge.manual { color: #3a7049; background: #edf5ee; }
 .calorie-source-badge.workout { color: #6a688c; background: #f0eff7; }
+.calorie-source-badge.smartwatch { color: #785d2b; background: #f7f1e4; }
 .calorie-history-result { min-width: 75px; text-align: right; }
 .calorie-history-result strong, .calorie-history-result span { display: block; }
 .calorie-history-result strong { color: var(--ink); font-size: 12px; font-weight: 700; }
@@ -87,6 +88,7 @@ html[data-theme='dark'] .calorie-met-table th,
 html[data-theme='dark'] .calorie-met-table td { border-color: var(--line); }
 html[data-theme='dark'] .calorie-source-badge.manual { color: #a7d8af; background: #263a2b; }
 html[data-theme='dark'] .calorie-source-badge.workout { color: #c5b9e8; background: #332f43; }
+html[data-theme='dark'] .calorie-source-badge.smartwatch { color: #e8d5a8; background: #403525; }
 
 @media (max-width: 900px) {
   .calorie-content-grid { grid-template-columns: minmax(0, 1fr) minmax(250px, .85fr); }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { normalizeProfile, PROFILE_STORAGE_KEY } from './profile.js'
+import { normalizeProfile, PROFILE_STORAGE_KEY, SMARTWATCH_OPTIONS } from './profile.js'
 import { readLocalJson, SESSION_STORAGE_KEY, writeLocalJson } from '../utils/localStorage.js'
 
 function createStorage(values = {}) {
@@ -77,6 +77,22 @@ test('profile choices are validated and injury details are bounded', () => {
     avatar: 'external-image',
     injuryAreas: ['Shoulder', 'Unknown', 'Knee', 'Shoulder'],
     injuryDescription: 'x'.repeat(350),
+  })
+
+  test('profile device selection supports all tracker options and preserves legacy choices', () => {
+    assert.deepEqual(SMARTWATCH_OPTIONS, [
+      'Apple Watch',
+      'Wear OS Smartwatch',
+      'Fitbit',
+      'Garmin',
+      'Other',
+      'No Smartwatch',
+    ])
+    for (const option of SMARTWATCH_OPTIONS) {
+      assert.equal(normalizeProfile({ smartwatchAvailability: option }).smartwatchAvailability, option)
+    }
+    assert.equal(normalizeProfile({ smartwatchAvailability: 'Yes' }).smartwatchAvailability, 'Yes')
+    assert.equal(normalizeProfile({ smartwatchAvailability: 'No' }).smartwatchAvailability, 'No')
   })
 
   assert.equal(profile.gender, '')

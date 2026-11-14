@@ -178,6 +178,7 @@ export function buildDailyProgressRecords({
   mealHistory = {},
   workoutProgress = {},
   calorieHistory = [],
+  fitnessTrackerRecords = [],
 } = {}) {
   const dates = new Set()
   for (const history of [waterHistory, habitHistory]) {
@@ -193,9 +194,22 @@ export function buildDailyProgressRecords({
       dates.add(activity.date)
     }
   }
+  for (const record of fitnessTrackerRecords) {
+    if (record && typeof record.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.date)) {
+      dates.add(record.date)
+    }
+  }
 
   const workoutRecords = getWorkoutActivityRecords(workoutProgress)
   Object.keys(workoutRecords).forEach((date) => dates.add(date))
+  const trackerWorkoutMinutesByDate = new Map()
+  for (const record of fitnessTrackerRecords) {
+    if (!record || typeof record.date !== 'string' || !Number.isFinite(record.workoutMinutes)) continue
+    trackerWorkoutMinutesByDate.set(
+      record.date,
+      (trackerWorkoutMinutesByDate.get(record.date) ?? 0) + record.workoutMinutes,
+    )
+  }
   const mealById = new Map(INDIAN_MEALS.map((meal) => [meal.id, meal]))
   const caloriesByDate = new Map()
   const seenCalorieIds = new Set()
@@ -232,6 +246,9 @@ export function buildDailyProgressRecords({
       totalExercises: workout.totalExercises ?? 0,
       completedWorkout: workout.completedWorkout ?? false,
       completedSessions: workout.completedSessions ?? 0,
+      fitnessTrackerWorkoutMinutes: trackerWorkoutMinutesByDate.has(date)
+        ? trackerWorkoutMinutesByDate.get(date)
+        : null,
       completedGoals: Number((waterRecord?.data?.totalMl ?? 0) >= DAILY_WATER_GOAL_ML)
         + Number(completedHabits === DAILY_HABITS.length),
       meals,

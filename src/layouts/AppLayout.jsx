@@ -1,4 +1,4 @@
-import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CreditCard, Droplets, Dumbbell, Flame, House, Leaf, LogOut, Moon, Music2, Pencil, Scale, Sun, Trophy } from 'lucide-react'
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CreditCard, Droplets, Dumbbell, Flame, House, Leaf, LogOut, Moon, Music2, Pencil, Scale, Sun, Trophy, Watch } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
@@ -15,6 +15,7 @@ const navigation = [
   { label: 'Overview', path: '/', icon: House },
   { label: 'Workouts', path: '/workouts', icon: Dumbbell },
   { label: 'Calories', path: '/calories', icon: Flame },
+  { label: 'Fitness tracker', path: '/fitness-tracker', icon: Watch },
   { label: 'Music', path: '/music', icon: Music2 },
   { label: 'Nutrition', path: '/nutrition', icon: Leaf },
   { label: 'BMI & profile', path: '/bmi-profile', icon: Scale },

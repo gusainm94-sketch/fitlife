@@ -130,6 +130,26 @@ test('daily, weekly, monthly, and recent totals use saved estimates without inve
   assert.deepEqual(getRecentDailyCalorieTotals(activities, '2026-11-11').map(({ calories }) => calories), [0, 0, 0, 0, 100, 0, 130])
 })
 
+test('fitness tracker calorie entries integrate as manual values without becoming workout estimates', () => {
+  const trackerEntry = {
+    id: 'fitness-tracker:entry',
+    activity: 'Other',
+    activityName: 'Manually entered fitness tracker calories',
+    durationMinutes: null,
+    intensity: null,
+    date: '2026-11-11',
+    weightKg: null,
+    caloriesKcal: 175,
+    source: 'smartwatch',
+  }
+
+  assert.equal(isCalorieActivity(trackerEntry), true)
+  assert.equal(isCalorieActivity({ ...trackerEntry, caloriesKcal: -1 }), false)
+  const merged = mergeCalorieActivities([trackerEntry], [trackerEntry])
+  assert.equal(merged.length, 1)
+  assert.deepEqual(getCaloriePeriodTotals(merged, '2026-11-11'), { today: 175, week: 175, month: 175 })
+})
+
 test('activity records persist across dates and remain scoped to the signed-in account', () => {
   const storage = createStorage({ [SESSION_STORAGE_KEY]: JSON.stringify({ userId: 'account-a' }) })
   globalThis.window = { localStorage: storage }

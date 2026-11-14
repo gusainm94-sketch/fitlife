@@ -111,8 +111,8 @@ function WeeklySummary({ records, today }) {
   const maxCalories = Math.max(1, ...days.map(({ calories }) => calories))
   return (
     <section className="panel calorie-week-panel" aria-labelledby="calorie-week-title">
-      <div className="calorie-panel-heading"><div><h2 id="calorie-week-title">Recent activity</h2><p>Estimated calories by day · last 7 days</p></div><span className="calorie-panel-icon"><Activity size={17} /></span></div>
-      <div className="calorie-week-chart" role="img" aria-label="Estimated calories burned for each of the last seven days">
+      <div className="calorie-panel-heading"><div><h2 id="calorie-week-title">Recent activity</h2><p>Recorded calories by day · last 7 days</p></div><span className="calorie-panel-icon"><Activity size={17} /></span></div>
+      <div className="calorie-week-chart" role="img" aria-label="Recorded calories burned for each of the last seven days">
         {days.map(({ date, calories }) => (
           <div className="calorie-week-day" key={date} aria-label={`${formatDateKey(date)}: ${calories} estimated kcal`}>
             <strong>{calories || ''}</strong>
@@ -151,21 +151,21 @@ function ActivityHistory({ activities, onUpdateDuration }) {
             <article className="calorie-history-row" key={record.id}>
               <span className="calorie-history-icon"><Activity size={16} /></span>
               <div className="calorie-history-main">
-                <div className="calorie-history-title"><strong>{record.activityName || record.activity}</strong><span className={`calorie-source-badge ${record.source}`}>{record.source === 'workout' ? 'Workout' : 'Manual'}</span></div>
-                <p>{record.activityName ? `${record.activity} · ` : ''}{formatDateKey(record.date)} · {record.intensity} intensity</p>
+                <div className="calorie-history-title"><strong>{record.activityName || record.activity}</strong><span className={`calorie-source-badge ${record.source}`}>{record.source === 'workout' ? 'Workout' : record.source === 'smartwatch' ? 'Manual tracker' : 'Manual'}</span></div>
+                <p>{record.source === 'smartwatch' ? `Fitness tracker entry · ${formatDateKey(record.date)}` : `${record.activityName ? `${record.activity} · ` : ''}${formatDateKey(record.date)} · ${record.intensity} intensity`}</p>
                 {editingId === record.id ? (
                   <form className="calorie-duration-edit" onSubmit={(event) => saveDuration(event, record.id)}>
                     <label>Duration in minutes<input aria-label={`Duration for ${record.activityName || record.activity}`} type="number" min="1" max="1440" step="1" required value={editDuration} onChange={(event) => setEditDuration(event.target.value)} /></label>
                     <button className="calorie-small-button" type="submit">Save</button>
                     <button className="calorie-small-button secondary" type="button" onClick={() => setEditingId('')}>Cancel</button>
                   </form>
-                ) : <span className="calorie-history-duration">{record.durationMinutes} min</span>}
+                ) : record.durationMinutes !== null && <span className="calorie-history-duration">{record.durationMinutes} min</span>}
               </div>
               <div className="calorie-history-result">
-                <strong>{record.caloriesKcal === null ? '—' : `~${record.caloriesKcal.toLocaleString()}`}</strong>
-                <span>{record.caloriesKcal === null ? 'Weight needed' : 'estimated kcal'}</span>
+                <strong>{record.caloriesKcal === null ? '—' : `${record.source === 'smartwatch' ? '' : '~'}${record.caloriesKcal.toLocaleString()}`}</strong>
+                <span>{record.caloriesKcal === null ? 'Weight needed' : record.source === 'smartwatch' ? 'manual kcal' : 'estimated kcal'}</span>
               </div>
-              {editingId !== record.id && <button className="calorie-edit-button" type="button" aria-label={`Edit duration for ${record.activityName || record.activity}`} onClick={() => { setEditDuration(String(record.durationMinutes)); setEditingId(record.id) }}><Pencil size={14} /></button>}
+              {editingId !== record.id && record.source !== 'smartwatch' && <button className="calorie-edit-button" type="button" aria-label={`Edit duration for ${record.activityName || record.activity}`} onClick={() => { setEditDuration(String(record.durationMinutes)); setEditingId(record.id) }}><Pencil size={14} /></button>}
             </article>
           ))}
         </div>
@@ -184,7 +184,7 @@ export default function CaloriesTrackerPage() {
     <div className="page-content calorie-page">
       <header className="calorie-page-heading">
         <div><p className="eyebrow">{formatDateKey(today, { year: 'numeric' })}</p><h1>Calories burned</h1><p className="workout-page-subtitle">Track activity and view MET-based calorie estimates.</p></div>
-        <span className="date-pill"><Flame size={14} /> Estimates only</span>
+        <span className="date-pill"><Flame size={14} /> Estimates + manual entries</span>
       </header>
 
       <section className="calorie-summary-grid" aria-label="Estimated calories burned">
