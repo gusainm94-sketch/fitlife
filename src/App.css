@@ -1334,3 +1334,40 @@ html[data-theme='dark'] .workout-medical-disclaimer small {
 html[data-theme='dark'] .workout-medical-disclaimer > svg {
   color: #e0ba68;
 }
+
+@media (max-width: 760px) {
+  .main-area { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .mobile-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: #9aaa9e transparent;
+  }
+  .mobile-nav a {
+    display: grid;
+    min-width: 76px;
+    min-height: 54px;
+    flex: 0 0 76px;
+    align-content: center;
+    justify-items: center;
+    gap: 4px;
+    padding: 4px 2px;
+    border-radius: 9px;
+    color: #78847c;
+    font-size: 10px;
+    line-height: 1.15;
+    text-align: center;
+    scroll-snap-align: start;
+  }
+  .mobile-nav a svg { width: 20px; height: 20px; flex: 0 0 auto; }
+  .mobile-nav a span { max-width: 100%; }
+  .mobile-nav a.active { color: #32724a; background: #f0f6f0; font-weight: 700; }
+  .mobile-nav a:focus-visible { outline-offset: -2px; }
+  html[data-theme='dark'] .mobile-nav a { color: #a5b2a9; }
+  html[data-theme='dark'] .mobile-nav a.active { color: #b4e2bc; }
+}

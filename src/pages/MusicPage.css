@@ -1,0 +1,49 @@
+.music-page { padding-bottom: 48px; }
+.music-page .workout-page-heading { margin-bottom: 18px; }
+.music-intro { display: flex; align-items: flex-start; gap: 14px; padding: 18px; }
+.music-intro-icon { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 12px; color: var(--emerald); background: var(--mint); }
+.music-intro strong { color: var(--ink); font-size: 13px; }
+.music-intro p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.music-library-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 25px 0 17px; }
+.music-library-toolbar h2, .music-category-heading h2 { margin: 0; color: var(--ink); font-size: 17px; font-weight: 650; letter-spacing: -.3px; }
+.music-library-toolbar p, .music-category-heading p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.music-filter-button { display: inline-flex; min-height: 39px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface); font-size: 11px; font-weight: 600; cursor: pointer; }
+.music-filter-button.active { border-color: #9dc9a6; color: #286341; background: var(--mint); }
+.music-filter-button span { display: grid; min-width: 19px; height: 19px; place-items: center; border-radius: 10px; color: #fff; background: #34734a; font-size: 9px; }
+.music-save-error { margin: 0 0 14px; color: #ad5144; font-size: 11px; }
+.music-category-section { margin-top: 25px; }
+.music-category-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 11px; }
+.music-category-heading h2 { font-size: 15px; }
+.music-category-heading > span { flex: 0 0 auto; color: var(--muted); font-size: 10px; }
+.music-playlist-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.music-playlist-card { display: grid; min-width: 0; grid-template-columns: 38px minmax(0, 1fr) 32px; align-items: start; gap: 10px; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); box-shadow: var(--shadow-card); }
+.music-platform-mark { display: grid; width: 38px; height: 38px; grid-row: span 2; place-items: center; border-radius: 11px; color: #fff; background: #286341; }
+.music-platform-mark.apple-music { background: #a84568; }
+.music-platform-mark.youtube-music { background: #bc3434; }
+.music-playlist-copy { min-width: 0; }
+.music-playlist-category { margin: 1px 0 4px; color: var(--emerald); font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+.music-playlist-copy h3 { margin: 0; color: var(--ink); font-size: 12px; font-weight: 650; line-height: 1.4; }
+.music-playlist-description { margin: 5px 0 8px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.music-platform-name { color: var(--muted); font-size: 9px; font-weight: 650; }
+.music-favorite-button { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: var(--surface); cursor: pointer; }
+.music-favorite-button.saved { border-color: #9dc9a6; color: #286341; background: var(--mint); }
+.music-listen-button { display: inline-flex; min-height: 37px; grid-column: 1 / -1; align-items: center; justify-content: center; gap: 7px; border-radius: 8px; color: #fff; background: #286341; font-size: 10px; font-weight: 650; transition: background .2s; }
+.music-listen-button:hover { background: #1e5034; }
+.music-empty { display: grid; justify-items: center; gap: 7px; padding: 32px 18px; color: var(--muted); text-align: center; }
+.music-empty > svg { color: var(--emerald); }
+.music-empty h3 { margin: 3px 0 0; color: var(--ink); font-size: 14px; }
+.music-empty p { margin: 0; font-size: 11px; }
+@media (max-width: 1050px) {
+  .music-playlist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .music-page { padding-bottom: 30px; }
+  .music-playlist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .music-playlist-card { grid-template-columns: 32px minmax(0, 1fr) 30px; gap: 8px; padding: 12px; }
+  .music-platform-mark { width: 32px; height: 32px; border-radius: 9px; }
+}
+@media (max-width: 500px) {
+  .music-playlist-grid { grid-template-columns: 1fr; }
+  .music-library-toolbar { align-items: flex-start; }
+  .music-filter-button { min-height: 36px; padding: 0 9px; font-size: 10px; }
+}
