@@ -35,7 +35,8 @@ test('older profile records receive safe defaults and keep existing measurements
   assert.equal(profile.dietPreference, '')
   assert.equal(profile.smokingStatus, '')
   assert.equal(profile.smartwatchAvailability, '')
-  assert.equal(profile.injuries, '')
+  assert.deepEqual(profile.injuryAreas, [])
+  assert.equal(profile.injuryDescription, '')
   assert.equal(profile.avatar, '')
 })
 
@@ -51,7 +52,8 @@ test('optional measurements and sensitive profile details can be left blank', ()
     dietPreference: '',
     smokingStatus: '',
     smartwatchAvailability: '',
-    injuries: '',
+    injuryAreas: [],
+    injuryDescription: '',
     avatar: '',
   })
 
@@ -64,14 +66,15 @@ test('optional measurements and sensitive profile details can be left blank', ()
   assert.equal(profile.avatar, '')
 })
 
-test('profile choices are validated and injury notes are bounded', () => {
+test('profile choices are validated and injury details are bounded', () => {
   const profile = normalizeProfile({
     gender: 'unknown',
     dietPreference: 'unknown',
     smokingStatus: 'unknown',
     smartwatchAvailability: 'sometimes',
     avatar: 'external-image',
-    injuries: 'x'.repeat(350),
+    injuryAreas: ['Shoulder', 'Unknown', 'Knee', 'Shoulder'],
+    injuryDescription: 'x'.repeat(350),
   })
 
   assert.equal(profile.gender, '')
@@ -79,7 +82,14 @@ test('profile choices are validated and injury notes are bounded', () => {
   assert.equal(profile.smokingStatus, '')
   assert.equal(profile.smartwatchAvailability, '')
   assert.equal(profile.avatar, '')
-  assert.equal(profile.injuries.length, 300)
+  assert.deepEqual(profile.injuryAreas, ['Shoulder', 'Knee'])
+  assert.equal(profile.injuryDescription.length, 300)
+})
+
+test('legacy injury notes migrate to the optional description', () => {
+  const profile = normalizeProfile({ injuries: 'Old note', injuryAreas: ['Back'] })
+  assert.deepEqual(profile.injuryAreas, ['Back'])
+  assert.equal(profile.injuryDescription, 'Old note')
 })
 
 test('profile records stay isolated per signed-in account and retain avatar choices', () => {
@@ -89,17 +99,31 @@ test('profile records stay isolated per signed-in account and retain avatar choi
   globalThis.window = { localStorage: storage }
 
   try {
-    const profileA = normalizeProfile({ ...normalizeProfile(null, 'Taylor'), avatar: 'female' })
+    const profileA = normalizeProfile({
+      ...normalizeProfile(null, 'Taylor'),
+      avatar: 'female',
+      injuryAreas: ['Shoulder'],
+      injuryDescription: 'Avoid overhead movement',
+    })
     assert.equal(writeLocalJson(PROFILE_STORAGE_KEY, profileA), true)
     storage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ userId: 'account-b' }))
     assert.equal(readLocalJson(PROFILE_STORAGE_KEY, null), null)
 
-    const profileB = normalizeProfile({ ...normalizeProfile(null, 'Jordan'), avatar: 'male' })
+    const profileB = normalizeProfile({
+      ...normalizeProfile(null, 'Jordan'),
+      avatar: 'male',
+      injuryAreas: ['Knee'],
+      injuryDescription: 'Recent strain',
+    })
     assert.equal(writeLocalJson(PROFILE_STORAGE_KEY, profileB), true)
     storage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ userId: 'account-a' }))
     assert.equal(readLocalJson(PROFILE_STORAGE_KEY, null).avatar, 'female')
+    assert.deepEqual(readLocalJson(PROFILE_STORAGE_KEY, null).injuryAreas, ['Shoulder'])
+    assert.equal(readLocalJson(PROFILE_STORAGE_KEY, null).injuryDescription, 'Avoid overhead movement')
     storage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ userId: 'account-b' }))
     assert.equal(readLocalJson(PROFILE_STORAGE_KEY, null).avatar, 'male')
+    assert.deepEqual(readLocalJson(PROFILE_STORAGE_KEY, null).injuryAreas, ['Knee'])
+    assert.equal(readLocalJson(PROFILE_STORAGE_KEY, null).injuryDescription, 'Recent strain')
   } finally {
     delete globalThis.window
   }

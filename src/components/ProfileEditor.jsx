@@ -6,6 +6,7 @@ import {
   FITNESS_GOALS,
   FITNESS_LEVELS,
   GENDER_OPTIONS,
+  INJURY_AREAS,
   SMARTWATCH_OPTIONS,
   SMOKING_STATUSES,
 } from '../data/profile.js'
@@ -24,7 +25,8 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
     dietPreference: profile.dietPreference,
     smokingStatus: profile.smokingStatus,
     smartwatchAvailability: profile.smartwatchAvailability,
-    injuries: profile.injuries,
+    injuryAreas: Array.isArray(profile.injuryAreas) ? profile.injuryAreas : [],
+    injuryDescription: profile.injuryDescription ?? '',
     avatar: profile.avatar,
   }))
 
@@ -71,9 +73,19 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
       dietPreference: form.dietPreference,
       smokingStatus: form.smokingStatus,
       smartwatchAvailability: form.smartwatchAvailability,
-      injuries: form.injuries.trim(),
+      injuryAreas: form.injuryAreas,
+      injuryDescription: form.injuryDescription.trim(),
       avatar: form.avatar,
     })
+  }
+
+  const toggleInjuryArea = (area) => {
+    setForm((current) => ({
+      ...current,
+      injuryAreas: current.injuryAreas.includes(area)
+        ? current.injuryAreas.filter((selectedArea) => selectedArea !== area)
+        : [...current.injuryAreas, area],
+    }))
   }
 
   return (
@@ -157,9 +169,18 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
               {SMARTWATCH_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
-          <label className="profile-field profile-field-wide"><span className="profile-label-row">Injuries or physical limitations <span className="profile-optional-label">Optional</span></span>
-            <textarea name="injuries" value={form.injuries} onChange={updateField} maxLength={300} rows={3} placeholder="Share only what you’re comfortable recording." />
-          </label>
+          <fieldset className="profile-injury-field profile-field-wide">
+            <legend>Injuries or physical limitations <span className="profile-optional-label">Optional</span></legend>
+            <div className="profile-injury-options" role="group" aria-label="Select injury or limitation areas">
+              {INJURY_AREAS.map((area) => (
+                <button key={area} className={`profile-injury-option${form.injuryAreas.includes(area) ? ' selected' : ''}`} type="button" aria-pressed={form.injuryAreas.includes(area)} onClick={() => toggleInjuryArea(area)}>{area}</button>
+              ))}
+            </div>
+            <label className="profile-field">Description <span className="profile-optional-label">Optional</span>
+              <textarea name="injuryDescription" value={form.injuryDescription} onChange={updateField} maxLength={300} rows={3} placeholder="Optional details about your limitation." />
+            </label>
+            <small className="profile-field-hint">FitLife does not diagnose injuries or determine whether an exercise is safe for you.</small>
+          </fieldset>
           {saveError && <p className="profile-save-error profile-field-wide" role="alert">Unable to save your profile. Check browser storage availability and try again.</p>}
           <div className="profile-form-actions profile-field-wide">
             <button className="profile-cancel" type="button" onClick={onClose}>Cancel</button>

@@ -7,6 +7,7 @@ import {
   getAccountStorageKey,
   SESSION_STORAGE_KEY,
 } from './localStorage.js'
+import { EQUIPMENT_PREFERENCES_STORAGE_KEY } from '../data/equipment.js'
 
 function createStorage(values = {}) {
   return {
@@ -32,6 +33,24 @@ test('fitness storage keys are account-scoped while the theme remains shared', (
     writeLocalJson('fitlife.profile.v1', { name: 'Taylor' })
     assert.deepEqual(readLocalJson('fitlife.profile.v1', null), { name: 'Taylor' })
     assert.equal(storage['fitlife.profile.v1'], undefined)
+  } finally {
+    delete globalThis.window
+  }
+})
+
+test('equipment preferences are isolated between accounts and load again on return', () => {
+  const storage = createStorage({
+    [SESSION_STORAGE_KEY]: JSON.stringify({ userId: 'account-a' }),
+  })
+  globalThis.window = { localStorage: storage }
+
+  try {
+    writeLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, { gym: ['dumbbells'], home: ['yoga-mat'] })
+    storage[SESSION_STORAGE_KEY] = JSON.stringify({ userId: 'account-b' })
+    assert.deepEqual(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null), null)
+    writeLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, { gym: ['barbells'], home: ['treadmill'] })
+    storage[SESSION_STORAGE_KEY] = JSON.stringify({ userId: 'account-a' })
+    assert.deepEqual(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null), { gym: ['dumbbells'], home: ['yoga-mat'] })
   } finally {
     delete globalThis.window
   }

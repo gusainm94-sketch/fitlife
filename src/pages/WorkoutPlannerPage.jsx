@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Check, CheckCircle2, Dumbbell, House, RotateCcw, Sparkles, Target, Timer } from 'lucide-react'
+import { Check, CheckCircle2, Dumbbell, House, RotateCcw, Sparkles, Target, Timer, TriangleAlert } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
 import { DEFAULT_PROFILE } from '../data/profile.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
+import { EQUIPMENT_OPTIONS, NO_EQUIPMENT, filterWorkoutPlan, toggleEquipmentSelection } from '../data/equipment.js'
+import { getExerciseSafetyWarnings, getPotentialExerciseAlternatives } from '../data/exerciseSafety.js'
 
 const getTodayIndex = () => (new Date().getDay() + 6) % 7
 
@@ -25,10 +27,10 @@ function getDayCompletion(plan, dayProgress = {}) {
   return { completed, total: plan.exercises.length, isComplete: plan.exercises.length > 0 && completed === plan.exercises.length }
 }
 
-function WeekDayButton({ day, date, plan, dayProgress, selected, onSelect }) {
+function WeekDayButton({ day, date, plan, hasScheduledWorkout, dayProgress, selected, onSelect }) {
   const completion = getDayCompletion(plan, dayProgress)
   const status = plan.exercises.length === 0
-    ? 'Rest'
+    ? hasScheduledWorkout ? '0 available' : 'Rest'
     : completion.isComplete
       ? 'Done'
       : completion.completed
@@ -45,7 +47,7 @@ function WeekDayButton({ day, date, plan, dayProgress, selected, onSelect }) {
   )
 }
 
-function ExerciseCard({ exercise, completed, onToggle, index }) {
+function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, safetyAlternatives }) {
   const repText = !exercise.reps
     ? ''
     : /reps?|seconds?|minutes?|metres?|\/(?:side|leg)|hold/i.test(exercise.reps)
@@ -60,6 +62,13 @@ function ExerciseCard({ exercise, completed, onToggle, index }) {
       <div className="exercise-details">
         <h3>{exercise.name}</h3>
         {exercise.description && <p>{exercise.description}</p>}
+        {safetyWarnings.length > 0 && <aside className="exercise-safety-warning" aria-label={`Caution for ${exercise.name}`}>
+          <strong><TriangleAlert size={14} /> Caution to review · {safetyWarnings.map(({ area }) => area).join(', ')}</strong>
+          <ul>{safetyWarnings.map(({ area, reason }) => <li key={area}>{reason}</li>)}</ul>
+          {safetyAlternatives.length > 0
+            ? <p>Possible options to discuss with a qualified professional (not a safety clearance): {safetyAlternatives.map(({ name }) => name).join(' · ')}.</p>
+            : <p>FitLife cannot determine an alternative for this limitation and your selected equipment.</p>}
+        </aside>}
         <div className="exercise-meta">
           {prescription && <span><RotateCcw size={13} /> {prescription}</span>}
           {exercise.duration && <span><Timer size={13} /> {exercise.duration}</span>}
@@ -72,21 +81,52 @@ function ExerciseCard({ exercise, completed, onToggle, index }) {
   )
 }
 
-function WorkoutProgress({ completed, total }) {
-  const percent = total ? Math.round((completed / total) * 100) : 100
+function WorkoutProgress({ completed, total, hasScheduledWorkout }) {
+  const percent = total ? Math.round((completed / total) * 100) : hasScheduledWorkout ? 0 : 100
 
   return (
     <div className="workout-progress-block">
-      <div className="workout-progress-label"><span><Target size={14} /> Daily progress</span><strong>{total ? `${completed} of ${total} exercises` : 'Rest day'} <b>{percent}%</b></strong></div>
+      <div className="workout-progress-label"><span><Target size={14} /> Daily progress</span><strong>{total ? `${completed} of ${total} exercises` : hasScheduledWorkout ? 'No matching exercises' : 'Rest day'} <b>{percent}%</b></strong></div>
       <div className="workout-progress-track" role="progressbar" aria-label="Daily workout completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div>
     </div>
+  )
+}
+
+function EquipmentSelector({ mode, selected, onToggle, saveError }) {
+  const availableCount = selected.includes(NO_EQUIPMENT) ? 0 : selected.length
+
+  return (
+    <details className="workout-equipment-panel panel">
+      <summary>
+        <span><strong>Equipment available</strong><small>{availableCount ? `${availableCount} selected` : 'No equipment selected'} · Select what you have to tailor your plan</small></span>
+        <span className="workout-equipment-summary-action">{selected.includes(NO_EQUIPMENT) ? 'No Equipment' : 'Update selection'}</span>
+      </summary>
+      <div className="workout-equipment-content">
+        <div className="workout-equipment-heading"><div><h2>{mode === 'gym' ? 'Gym equipment' : 'Home equipment'}</h2><p>Exercises that need equipment you do not select will be hidden. You can change this anytime.</p></div></div>
+        <div className="workout-equipment-grid" role="group" aria-label={`Select ${mode} equipment`}>
+          {EQUIPMENT_OPTIONS[mode].map(({ id, label }) => {
+            const isSelected = selected.includes(id)
+            return (
+              <button key={id} className={`workout-equipment-option${isSelected ? ' selected' : ''}`} type="button" aria-pressed={isSelected} onClick={() => onToggle(id)}>
+                <span className="workout-equipment-check" aria-hidden="true">{isSelected ? <Check size={14} /> : null}</span>
+                <span>{label}</span>
+              </button>
+            )
+          })}
+        </div>
+        {saveError && <p className="workout-equipment-error" role="alert">Unable to save equipment preferences. Check browser storage and try again.</p>}
+      </div>
+    </details>
   )
 }
 
 export default function WorkoutPlannerPage() {
   const [mode, setMode] = useState('gym')
   const [selectedDayIndex, setSelectedDayIndex] = useState(getTodayIndex)
-  const { profile, workoutProgress, toggleWorkoutExercise } = useAppData()
+  const { profile, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise } = useAppData()
+  const injuryAreas = Array.isArray(profile.injuryAreas) ? profile.injuryAreas : []
+  const injuryDescription = typeof profile.injuryDescription === 'string' ? profile.injuryDescription : ''
+  const safetyAreas = injuryAreas.length ? injuryAreas : injuryDescription.trim() ? ['Other'] : []
   const [difficulty, setDifficulty] = useState(profile.fitnessLevel || DEFAULT_PROFILE.fitnessLevel)
   useEffect(() => {
     const refreshSelectedDay = () => setSelectedDayIndex(getTodayIndex())
@@ -102,8 +142,16 @@ export default function WorkoutPlannerPage() {
   const weekDates = makeWeekDates()
   const weekId = weekDates[0].weekId
   const selectedDay = WEEKDAYS[selectedDayIndex]
-  const plans = mode === 'gym' ? GYM_WORKOUTS[difficulty] : WEEKLY_WORKOUTS.home
+  const originalPlans = mode === 'gym' ? GYM_WORKOUTS[difficulty] : WEEKLY_WORKOUTS.home
+  const selectedEquipment = equipmentPreferences[mode]
+  const dayPlans = originalPlans.map((originalPlan) => filterWorkoutPlan(mode, originalPlan, selectedEquipment))
+  const safetyCatalog = mode === 'gym'
+    ? Object.values(GYM_WORKOUTS).flatMap((plansForLevel) => plansForLevel.flatMap(({ exercises }) => exercises))
+    : WEEKLY_WORKOUTS.home.flatMap(({ exercises }) => exercises)
+  const plans = dayPlans.map(({ plan: filteredPlan }) => filteredPlan)
   const plan = plans[selectedDayIndex]
+  const alternatives = dayPlans[selectedDayIndex].alternatives
+  const hasScheduledWorkout = originalPlans[selectedDayIndex].exercises.length > 0
   const dayProgress = mode === 'gym'
     ? workoutProgress.gym?.[difficulty]?.[weekId]?.[selectedDay.id] ?? {}
     : workoutProgress.home?.[weekId]?.[selectedDay.id] ?? {}
@@ -120,6 +168,16 @@ export default function WorkoutPlannerPage() {
         </div>
       </section>
 
+      <EquipmentSelector
+        mode={mode}
+        selected={selectedEquipment}
+        saveError={equipmentStorageError}
+        onToggle={(equipmentId) => updateEquipmentPreferences({
+          ...equipmentPreferences,
+          [mode]: toggleEquipmentSelection(selectedEquipment, equipmentId),
+        })}
+      />
+
       {mode === 'gym' && <div className="workout-difficulty-row">
         <span>Gym difficulty</span>
         <div className="workout-difficulty-toggle" role="group" aria-label="Choose gym workout difficulty">
@@ -130,7 +188,7 @@ export default function WorkoutPlannerPage() {
       <section className="panel workout-week-panel" aria-labelledby="week-heading">
         <div className="workout-section-heading"><div><h2 id="week-heading">Your week</h2><p>Monday to Sunday · choose a day to see the plan</p></div><span className="workout-week-badge"><Sparkles size={13} /> {mode === 'gym' ? `${difficulty} gym plan` : 'Home plan'}</span></div>
         <div className="workout-week-grid">
-          {WEEKDAYS.map((day, index) => <WeekDayButton key={day.id} day={day} date={weekDates[index]} plan={plans[index]} dayProgress={mode === 'gym' ? workoutProgress.gym?.[difficulty]?.[weekId]?.[day.id] : workoutProgress.home?.[weekId]?.[day.id]} selected={selectedDayIndex === index} onSelect={() => setSelectedDayIndex(index)} />)}
+          {WEEKDAYS.map((day, index) => <WeekDayButton key={day.id} day={day} date={weekDates[index]} plan={plans[index]} hasScheduledWorkout={originalPlans[index].exercises.length > 0} dayProgress={mode === 'gym' ? workoutProgress.gym?.[difficulty]?.[weekId]?.[day.id] : workoutProgress.home?.[weekId]?.[day.id]} selected={selectedDayIndex === index} onSelect={() => setSelectedDayIndex(index)} />)}
         </div>
       </section>
 
@@ -141,15 +199,27 @@ export default function WorkoutPlannerPage() {
           {plan.exercises.length > 0 && <span className="workout-duration"><Dumbbell size={14} /> {plan.exercises.length} exercises</span>}
         </div>
 
-        <WorkoutProgress completed={completion.completed} total={completion.total} />
+        <WorkoutProgress completed={completion.completed} total={completion.total} hasScheduledWorkout={hasScheduledWorkout} />
 
         {plan.exercises.length > 0 ? (
           <div className="exercise-list" aria-label={`${plan.title} exercises`}>
-            {plan.exercises.map((item, index) => <ExerciseCard key={item.id} exercise={item} index={index} completed={Boolean(dayProgress[item.id])} onToggle={() => toggleWorkoutExercise(mode, weekId, selectedDay.id, item.id, difficulty)} />)}
+            {plan.exercises.map((item, index) => {
+              const safetyWarnings = getExerciseSafetyWarnings(item, safetyAreas)
+              const safetyAlternatives = safetyWarnings.length
+                ? getPotentialExerciseAlternatives(mode, item, safetyAreas, selectedEquipment, safetyCatalog)
+                : []
+              return <ExerciseCard key={item.id} exercise={item} index={index} completed={Boolean(dayProgress[item.id])} onToggle={() => toggleWorkoutExercise(mode, weekId, selectedDay.id, item.id, difficulty)} safetyWarnings={safetyWarnings} safetyAlternatives={safetyAlternatives} />
+            })}
           </div>
         ) : (
-          <div className="rest-day-card"><span><Sparkles size={18} /></span><div><strong>Complete Rest</strong><p>Sunday is your scheduled rest day. Rest and recover before the next week.</p></div></div>
+          hasScheduledWorkout
+            ? <div className="rest-day-card"><span><Sparkles size={18} /></span><div><strong>No matching exercises</strong><p>Choose more equipment above, or try one of the alternatives below.</p></div></div>
+            : <div className="rest-day-card"><span><Sparkles size={18} /></span><div><strong>Complete Rest</strong><p>Sunday is your scheduled rest day. Rest and recover before the next week.</p></div></div>
         )}
+        {alternatives.length > 0 && <section className="workout-alternatives" aria-label="Alternative exercises">
+          <div className="workout-alternatives-heading"><h3>Suitable alternatives</h3><p>Suggestions that match your current equipment selection. These do not change your saved plan.</p></div>
+          <ul>{alternatives.map(({ exercise, name }) => <li key={exercise.id}><span>{exercise.name}</span><b aria-hidden="true">→</b><strong>{name}</strong></li>)}</ul>
+        </section>}
       </section>
 
       <section className="panel workout-guidelines" aria-labelledby="guidelines-heading">
@@ -163,6 +233,11 @@ export default function WorkoutPlannerPage() {
           <li>Stop an exercise if you experience sharp pain, dizziness or unusual symptoms.</li>
         </ul>
       </section>
+
+      <aside className="workout-medical-disclaimer" aria-label="Medical disclaimer">
+        <TriangleAlert size={17} />
+        <div><strong>Exercise safety information</strong><p>FitLife provides general fitness information, not medical advice. It does not diagnose injuries or prescribe rehabilitation. Consult a qualified healthcare professional when necessary. Stop exercising if you experience sharp pain, dizziness, or unusual symptoms.</p><small>A missing warning does not mean an exercise is medically safe or suitable for you.</small></div>
+      </aside>
     </div>
   )
 }

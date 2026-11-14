@@ -12,7 +12,8 @@ export const DEFAULT_PROFILE = {
   dietPreference: '',
   smokingStatus: '',
   smartwatchAvailability: '',
-  injuries: '',
+  injuryAreas: [],
+  injuryDescription: '',
   avatar: '',
 }
 
@@ -42,6 +43,7 @@ export const AVATAR_OPTIONS = [
   { id: 'female', label: 'Female avatar' },
   { id: 'neutral', label: 'Neutral avatar' },
 ]
+export const INJURY_AREAS = ['Shoulder', 'Back', 'Knee', 'Ankle', 'Wrist', 'Elbow', 'Neck', 'Other']
 
 const LEGACY_FITNESS_GOALS = {
   'Build strength': 'Strength',
@@ -86,7 +88,12 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
     dietPreference: normalizeOptionalChoice(saved.dietPreference, DIET_PREFERENCES),
     smokingStatus: normalizeOptionalChoice(saved.smokingStatus, SMOKING_STATUSES),
     smartwatchAvailability: normalizeOptionalChoice(saved.smartwatchAvailability, SMARTWATCH_OPTIONS),
-    injuries: typeof saved.injuries === 'string' ? saved.injuries.slice(0, 300) : '',
+    injuryAreas: Array.isArray(saved.injuryAreas)
+      ? [...new Set(saved.injuryAreas.filter((area) => INJURY_AREAS.includes(area)))]
+      : [],
+    injuryDescription: (typeof saved.injuryDescription === 'string'
+      ? saved.injuryDescription
+      : typeof saved.injuries === 'string' ? saved.injuries : '').slice(0, 300),
     avatar: normalizeOptionalChoice(saved.avatar, AVATAR_OPTIONS.map(({ id }) => id)),
   }
 }

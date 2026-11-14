@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DASHBOARD_STATS, normalizeProfile, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
 import { GYM_DIFFICULTIES } from '../data/workouts.js'
+import { EQUIPMENT_PREFERENCES_STORAGE_KEY, normalizeEquipmentPreferences } from '../data/equipment.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
@@ -46,6 +47,10 @@ export function AppProvider({ children, user }) {
   const initialProfile = useRef(profile)
   const [profileStorageError, setProfileStorageError] = useState(false)
   const [workoutProgress, setWorkoutProgress] = useState(loadWorkoutProgress)
+  const [equipmentPreferences, setEquipmentPreferences] = useState(() => (
+    normalizeEquipmentPreferences(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null))
+  ))
+  const [equipmentStorageError, setEquipmentStorageError] = useState(false)
   const dashboardStats = DASHBOARD_STATS
 
   useEffect(() => {
@@ -74,6 +79,18 @@ export function AppProvider({ children, user }) {
     setProfileStorageError(false)
     return true
   }, [profile, user.name])
+
+  const updateEquipmentPreferences = useCallback((nextPreferences) => {
+    const normalized = normalizeEquipmentPreferences(nextPreferences)
+    if (!writeLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, normalized)) {
+      setEquipmentStorageError(true)
+      return false
+    }
+
+    setEquipmentPreferences(normalized)
+    setEquipmentStorageError(false)
+    return true
+  }, [])
 
   const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId, difficulty = 'Beginner') => {
     setWorkoutProgress((current) => {
@@ -108,9 +125,12 @@ export function AppProvider({ children, user }) {
     updateProfile,
     profileStorageError,
     dashboardStats,
+    equipmentPreferences,
+    updateEquipmentPreferences,
+    equipmentStorageError,
     workoutProgress,
     toggleWorkoutExercise,
-  }), [profile, updateProfile, profileStorageError, dashboardStats, workoutProgress, toggleWorkoutExercise])
+  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

@@ -202,6 +202,24 @@
 .workout-section-heading h2 { margin: 0; color: #27382d; font-size: 14px; font-weight: 650; }
 .workout-section-heading p { margin: 5px 0 0; color: #929b94; font-size: 10px; }
 .workout-week-badge { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border-radius: 7px; color: #4a7955; background: #eef6ef; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.workout-equipment-panel { margin-bottom: 15px; padding: 0 17px; }
+.workout-equipment-panel summary { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.workout-equipment-panel summary::-webkit-details-marker { display: none; }
+.workout-equipment-panel summary > span:first-child { display: grid; gap: 4px; }
+.workout-equipment-panel summary strong { color: #304137; font-size: 12px; font-weight: 650; }
+.workout-equipment-panel summary small { color: #87928a; font-size: 10px; }
+.workout-equipment-summary-action { flex: 0 0 auto; color: #3d8054; font-size: 10px; font-weight: 650; }
+.workout-equipment-content { padding: 0 0 17px; }
+.workout-equipment-heading { margin-bottom: 12px; }
+.workout-equipment-heading h2 { margin: 0; color: #304137; font-size: 12px; font-weight: 650; }
+.workout-equipment-heading p { margin: 5px 0 0; color: #87928a; font-size: 10px; line-height: 1.5; }
+.workout-equipment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; }
+.workout-equipment-option { display: flex; min-width: 0; min-height: 40px; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e6ebe6; border-radius: 9px; color: #536157; text-align: left; background: #fff; font-size: 10px; font-weight: 550; cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.workout-equipment-option:hover { border-color: #9cbea3; background: #f7faf7; }
+.workout-equipment-option.selected { border-color: #5a956b; color: #2f7043; background: #f0f7f1; }
+.workout-equipment-check { display: grid; width: 18px; height: 18px; flex: 0 0 auto; place-items: center; border: 1px solid #d5ded6; border-radius: 5px; color: #fff; background: #fff; }
+.workout-equipment-option.selected .workout-equipment-check { border-color: #3d8054; background: #3d8054; }
+.workout-equipment-error { margin: 11px 0 0; color: #a84035; font-size: 10px; }
 .workout-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .workout-day-button { display: grid; min-width: 0; min-height: 105px; align-content: start; justify-items: start; gap: 5px; padding: 10px; border: 1px solid #edf0ed; border-radius: 10px; text-align: left; background: #fbfcfb; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
 .workout-day-button:hover { border-color: #c9ddcd; background: #f6faf6; transform: translateY(-1px); }
@@ -233,6 +251,14 @@
 .workout-progress-label b { margin-left: 8px; color: #388054; font-weight: 700; }
 .workout-progress-track { height: 6px; overflow: hidden; border-radius: 8px; background: #edf1ed; }
 .workout-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #397b50, #6eab7b); transition: width .25s ease; }
+.workout-alternatives { margin-top: 15px; padding-top: 14px; border-top: 1px solid #edf0ed; }
+.workout-alternatives-heading h3 { margin: 0; color: #536157; font-size: 11px; font-weight: 650; }
+.workout-alternatives-heading p { margin: 4px 0 10px; color: #87928a; font-size: 9px; line-height: 1.5; }
+.workout-alternatives ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 16px; margin: 0; padding: 0; list-style: none; }
+.workout-alternatives li { display: flex; min-width: 0; align-items: center; gap: 7px; color: #87928a; font-size: 9px; }
+.workout-alternatives li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workout-alternatives li b { color: #9ba79d; }
+.workout-alternatives li strong { overflow: hidden; color: #3d8054; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
 .exercise-list { display: grid; gap: 9px; }
 .exercise-card { display: flex; min-width: 0; align-items: flex-start; gap: 12px; padding: 13px; border: 1px solid #edf0ed; border-radius: 11px; background: #fff; transition: border-color .2s, background .2s; }
 .exercise-card.completed { border-color: #dcebe0; background: #f8fbf8; }
@@ -274,13 +300,32 @@
   .workout-session-heading { align-items: flex-start; }
   .workout-duration { padding-top: 5px; }
   .workout-guidelines ul { grid-template-columns: 1fr; gap: 7px; }
+  .workout-alternatives ul { grid-template-columns: 1fr; }
 }
 @media (max-width: 420px) {
   .workout-session-heading { flex-direction: column; }
   .workout-duration { padding-top: 0; padding-left: 54px; }
   .exercise-card { gap: 9px; padding: 11px; }
   .exercise-details p { font-size: 9px; }
+  .workout-equipment-panel { padding-right: 12px; padding-left: 12px; }
+  .workout-equipment-panel summary small { max-width: 220px; line-height: 1.4; }
 }
+
+.profile-injury-field { min-width: 0; margin: 0; padding: 0; border: 0; color: #506055; font-size: 11px; font-weight: 650; }
+.profile-injury-field legend { padding: 0; }
+.profile-injury-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 7px; margin: 10px 0 12px; }
+.profile-injury-option { min-height: 36px; padding: 0 9px; border: 1px solid #e5ebe6; border-radius: 8px; color: #66746a; background: #fff; font-size: 10px; font-weight: 550; cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.profile-injury-option:hover, .profile-injury-option.selected { border-color: #6b9b74; color: #326b46; background: #f3f8f3; }
+.profile-injury-field > .profile-field { margin-top: 11px; }
+.exercise-safety-warning { margin-top: 11px; padding: 10px 11px; border: 1px solid #ecd7aa; border-radius: 9px; color: #725322; background: #fff9ec; }
+.exercise-safety-warning > strong { display: flex; align-items: center; gap: 6px; color: #805c1e; font-size: 10px; }
+.exercise-safety-warning ul { display: grid; gap: 4px; margin: 7px 0 0; padding-left: 18px; font-size: 9px; line-height: 1.5; }
+.exercise-safety-warning p { margin: 7px 0 0; color: #78633d; font-size: 9px; line-height: 1.5; }
+.workout-medical-disclaimer { display: flex; align-items: flex-start; gap: 10px; margin-top: 15px; padding: 14px 16px; border: 1px solid #ead8b4; border-radius: 12px; color: #705725; background: #fff9ed; }
+.workout-medical-disclaimer > svg { flex: 0 0 auto; margin-top: 1px; color: #a9782b; }
+.workout-medical-disclaimer strong { display: block; color: #674d1f; font-size: 11px; }
+.workout-medical-disclaimer p { margin: 5px 0 0; font-size: 10px; line-height: 1.6; }
+.workout-medical-disclaimer small { display: block; margin-top: 6px; color: #806b45; font-size: 9px; line-height: 1.5; }
 
 .diet-page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; margin: 4px 0 23px; }
 .diet-page-heading h1 { margin: 0; color: var(--ink); font-size: clamp(26px, 3vw, 33px); font-weight: 650; letter-spacing: -1.2px; line-height: 1.2; }
@@ -579,6 +624,7 @@ html[data-theme='dark'] .icon-button,
 html[data-theme='dark'] .date-pill,
 html[data-theme='dark'] .range-select,
 html[data-theme='dark'] .workout-mode-toggle,
+html[data-theme='dark'] .workout-equipment-option,
 html[data-theme='dark'] .diet-filter-group,
 html[data-theme='dark'] .profile-dialog,
 html[data-theme='dark'] .profile-cancel,
@@ -672,9 +718,44 @@ html[data-theme='dark'] .profile-avatar-option.selected {
   background: #283a2c;
 }
 html[data-theme='dark'] .workout-mode-toggle button:hover,
+html[data-theme='dark'] .workout-equipment-option:hover,
 html[data-theme='dark'] .diet-filter-group button:hover {
   color: #a3d8ad;
   background: #28382c;
+}
+html[data-theme='dark'] .workout-equipment-panel summary strong,
+html[data-theme='dark'] .workout-equipment-heading h2,
+html[data-theme='dark'] .workout-alternatives-heading h3 {
+  color: #e6eee8;
+}
+html[data-theme='dark'] .workout-equipment-panel summary small,
+html[data-theme='dark'] .workout-equipment-heading p,
+html[data-theme='dark'] .workout-alternatives-heading p,
+html[data-theme='dark'] .workout-alternatives li {
+  color: #a8b6ac;
+}
+html[data-theme='dark'] .workout-equipment-option.selected {
+  border-color: #5a956b;
+  color: #b4e2bc;
+  background: #263a2b;
+}
+html[data-theme='dark'] .workout-equipment-check {
+  border-color: #46564a;
+  background: #17211a;
+}
+html[data-theme='dark'] .workout-equipment-option.selected .workout-equipment-check {
+  border-color: #34734a;
+  background: #34734a;
+}
+html[data-theme='dark'] .workout-equipment-error {
+  color: #ef9b8e;
+}
+html[data-theme='dark'] .workout-alternatives {
+  border-color: var(--line);
+}
+html[data-theme='dark'] .workout-alternatives li strong,
+html[data-theme='dark'] .workout-equipment-summary-action {
+  color: #91d19f;
 }
 html[data-theme='dark'] .workout-mode-toggle button.active,
 html[data-theme='dark'] .diet-filter-group button.active,
@@ -1136,4 +1217,34 @@ html[data-theme='dark'] .redemption-input-row input { border-color: var(--line);
   .demo-checkout-actions { align-items: stretch; flex-direction: column-reverse; }
   .dashboard-membership > div { min-width: calc(100% - 55px); }
   .dashboard-membership > .text-action { margin-left: 0; }
+}
+
+html[data-theme='dark'] .profile-injury-field { color: var(--ink); }
+html[data-theme='dark'] .profile-injury-option {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface);
+}
+html[data-theme='dark'] .profile-injury-option:hover,
+html[data-theme='dark'] .profile-injury-option.selected {
+  border-color: #5a956b;
+  color: #b4e2bc;
+  background: #283a2c;
+}
+html[data-theme='dark'] .exercise-safety-warning,
+html[data-theme='dark'] .workout-medical-disclaimer {
+  border-color: #655536;
+  color: #e8d5a8;
+  background: #342d1e;
+}
+html[data-theme='dark'] .exercise-safety-warning > strong,
+html[data-theme='dark'] .workout-medical-disclaimer strong {
+  color: #f0d99e;
+}
+html[data-theme='dark'] .exercise-safety-warning p,
+html[data-theme='dark'] .workout-medical-disclaimer small {
+  color: #d3c49f;
+}
+html[data-theme='dark'] .workout-medical-disclaimer > svg {
+  color: #e0ba68;
 }

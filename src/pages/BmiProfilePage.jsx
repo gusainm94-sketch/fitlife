@@ -22,6 +22,8 @@ export default function BmiProfilePage() {
   const { profile, updateProfile, profileStorageError } = useAppData()
   const [draft, setDraft] = useState(null)
   const [savedNotice, setSavedNotice] = useState(false)
+  const injuryAreas = Array.isArray(profile.injuryAreas) ? profile.injuryAreas : []
+  const injuryDescription = typeof profile.injuryDescription === 'string' ? profile.injuryDescription : ''
 
   const profileChanged = draft && (draft.profileHeight !== profile.height || draft.profileWeight !== profile.weight)
   const height = !draft || profileChanged ? String(profile.height ?? '') : draft.height
@@ -145,7 +147,7 @@ export default function BmiProfilePage() {
             <span className="fitness-profile-icon"><Activity size={16} /></span>
             <div><small>Smartwatch available</small><strong>{profile.smartwatchAvailability || 'Not provided'}</strong></div>
           </div>
-          {profile.injuries && <div className="fitness-profile-item fitness-profile-limitations"><div><small>Injuries or physical limitations</small><strong>{profile.injuries}</strong></div></div>}
+          {(injuryAreas.length > 0 || injuryDescription) && <div className="fitness-profile-item fitness-profile-limitations"><div><small>Injuries or physical limitations</small><strong>{injuryAreas.join(', ') || 'Not specified'}{injuryDescription ? ` · ${injuryDescription}` : ''}</strong></div></div>}
           <p className="fitness-profile-hint">To update your details or avatar, use Edit profile in the navigation.</p>
         </aside>
       </div>
