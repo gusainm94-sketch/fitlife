@@ -151,6 +151,12 @@ const HOME_ALTERNATIVES = {
   'exercise-cycle': [{ name: 'Low-impact march', equipment: BODYWEIGHT }],
 }
 
+export const EQUIPMENT_ALTERNATIVE_NAMES = [...new Set(
+  [...Object.values(GYM_ALTERNATIVES), ...Object.values(HOME_ALTERNATIVES)]
+    .flat()
+    .map(({ name }) => name),
+)]
+
 export function normalizeEquipmentPreferences(saved) {
   const preferences = {}
   for (const mode of ['gym', 'home']) {

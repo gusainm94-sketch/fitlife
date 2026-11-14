@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Check, CheckCircle2, Dumbbell, House, RotateCcw, Sparkles, Target, Timer, TriangleAlert } from 'lucide-react'
+import { Check, CheckCircle2, Dumbbell, ExternalLink, House, Play, RotateCcw, Search, Sparkles, Target, Timer, TriangleAlert } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
 import { DEFAULT_PROFILE } from '../data/profile.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
 import { EQUIPMENT_OPTIONS, NO_EQUIPMENT, filterWorkoutPlan, toggleEquipmentSelection } from '../data/equipment.js'
 import { getExerciseSafetyWarnings, getPotentialExerciseAlternatives } from '../data/exerciseSafety.js'
+import { EXERCISE_VIDEO_LIBRARY, getExerciseVideoUrl } from '../data/exerciseVideos.js'
 
 const getTodayIndex = () => (new Date().getDay() + 6) % 7
 
@@ -62,6 +63,9 @@ function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, sa
       <div className="exercise-details">
         <h3>{exercise.name}</h3>
         {exercise.description && <p>{exercise.description}</p>}
+        <a className="exercise-video-link" href={getExerciseVideoUrl(exercise.name)} target="_blank" rel="noopener noreferrer">
+          <Play size={13} /> Watch demonstration <ExternalLink size={12} />
+        </a>
         {safetyWarnings.length > 0 && <aside className="exercise-safety-warning" aria-label={`Caution for ${exercise.name}`}>
           <strong><TriangleAlert size={14} /> Caution to review · {safetyWarnings.map(({ area }) => area).join(', ')}</strong>
           <ul>{safetyWarnings.map(({ area, reason }) => <li key={area}>{reason}</li>)}</ul>
@@ -78,6 +82,64 @@ function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, sa
         {completed ? <Check size={17} strokeWidth={2.5} /> : <span />}
       </button>
     </article>
+  )
+}
+
+const VIDEO_FILTERS = [
+  { id: 'all', label: 'All exercises' },
+  { id: 'gym', label: 'Gym' },
+  { id: 'home', label: 'Home' },
+  { id: 'alternative', label: 'Equipment alternatives' },
+]
+
+function ExerciseVideoLibrary() {
+  const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const exercises = EXERCISE_VIDEO_LIBRARY.filter((exercise) => (
+    (filter === 'all' || exercise.sources.includes(filter))
+    && (!normalizedSearch || `${exercise.name} ${exercise.description}`.toLocaleLowerCase().includes(normalizedSearch))
+  ))
+
+  return (
+    <details className="panel exercise-video-library">
+      <summary>
+        <span><strong>Exercise video library</strong><small>{EXERCISE_VIDEO_LIBRARY.length} exercises · Gym, home and equipment alternatives</small></span>
+        <span className="exercise-video-library-action">Browse demonstrations</span>
+      </summary>
+      <div className="exercise-video-library-content">
+        <div className="exercise-video-toolbar">
+          <div className="exercise-video-filters" role="group" aria-label="Filter exercise videos">
+            {VIDEO_FILTERS.map(({ id, label }) => (
+              <button key={id} className={filter === id ? 'active' : ''} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
+            ))}
+          </div>
+          <label className="exercise-video-search">
+            <Search size={15} />
+            <span>Search</span>
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search exercises" />
+          </label>
+        </div>
+        {exercises.length ? (
+          <div className="exercise-video-grid">
+            {exercises.map((exercise) => (
+              <article className="exercise-video-card" key={exercise.id}>
+                <div className="exercise-video-art" aria-hidden="true"><Play size={22} /></div>
+                <div className="exercise-video-copy">
+                  <div className="exercise-video-tags">{exercise.sources.map((source) => <span key={source}>{source === 'alternative' ? 'Equipment alternative' : `${source} workout`}</span>)}</div>
+                  <h3>{exercise.name}</h3>
+                  <p>{exercise.description}</p>
+                  <a className="exercise-video-link" href={exercise.videoUrl} target="_blank" rel="noopener noreferrer">
+                    <Play size={13} /> Watch video on YouTube <ExternalLink size={12} />
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : <p className="exercise-video-empty">No exercises match your search.</p>}
+        <p className="exercise-video-note">Links open YouTube search results so you can choose a suitable demonstration. Videos are not embedded or autoplayed.</p>
+      </div>
+    </details>
   )
 }
 
@@ -218,9 +280,11 @@ export default function WorkoutPlannerPage() {
         )}
         {alternatives.length > 0 && <section className="workout-alternatives" aria-label="Alternative exercises">
           <div className="workout-alternatives-heading"><h3>Suitable alternatives</h3><p>Suggestions that match your current equipment selection. These do not change your saved plan.</p></div>
-          <ul>{alternatives.map(({ exercise, name }) => <li key={exercise.id}><span>{exercise.name}</span><b aria-hidden="true">→</b><strong>{name}</strong></li>)}</ul>
+          <ul>{alternatives.map(({ exercise, name }) => <li key={exercise.id}><span>{exercise.name}</span><b aria-hidden="true">→</b><strong>{name}</strong><a className="exercise-video-link" href={getExerciseVideoUrl(name)} target="_blank" rel="noopener noreferrer" aria-label={`Watch a demonstration of ${name}`}><Play size={12} /> Watch</a></li>)}</ul>
         </section>}
       </section>
+
+      <ExerciseVideoLibrary />
 
       <section className="panel workout-guidelines" aria-labelledby="guidelines-heading">
         <div className="workout-section-heading"><div><h2 id="guidelines-heading">Training guidelines</h2><p>Keep each session safe, manageable and consistent.</p></div></div>
