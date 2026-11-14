@@ -65,6 +65,12 @@
 .calorie-small-button { min-height: 31px; padding: 0 9px; border: 1px solid #286341; border-radius: 7px; color: #fff; background: #286341; font-size: 9px; font-weight: 650; cursor: pointer; }
 .calorie-small-button.secondary { border-color: var(--line); color: var(--muted); background: var(--surface); }
 .calorie-history-empty { margin: 17px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.calorie-intake-panel { margin-top: 15px; }
+.calorie-intake-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 13px; padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); }
+.calorie-intake-total strong { color: var(--ink); font-size: 19px; }
+.calorie-intake-total strong small { color: var(--muted); font-size: 9px; font-weight: 500; }
+.calorie-intake-total > span { color: var(--muted); font-size: 9px; }
+.calorie-intake-panel > .text-action { margin-top: 12px; }
 
 html[data-theme='dark'] .calorie-summary-card,
 html[data-theme='dark'] .calorie-edit-button {
@@ -82,6 +88,7 @@ html[data-theme='dark'] .calorie-estimate-preview {
   border-color: var(--line);
   background: #202e24;
 }
+html[data-theme='dark'] .calorie-intake-total { border-color: var(--line); background: #17211a; }
 html[data-theme='dark'] .calorie-estimate-preview strong,
 html[data-theme='dark'] .calorie-history-result strong { color: var(--ink); }
 html[data-theme='dark'] .calorie-met-table th,

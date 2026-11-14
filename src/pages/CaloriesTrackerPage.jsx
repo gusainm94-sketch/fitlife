@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, Flame, Pencil, Plus, Scale } from 'lucide-react'
+import { Activity, Flame, Pencil, Plus, Scale, Utensils } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
 import {
@@ -13,6 +13,8 @@ import {
   getRecentDailyCalorieTotals,
 } from '../data/calories.js'
 import { formatDateKey, getTodayKey } from '../utils/date.js'
+import { FOOD_INTAKE_STORAGE_KEY, getFoodIntakeCaloriesForDate, normalizeFoodIntake } from '../data/foodIntake.js'
+import { readLocalJson } from '../utils/localStorage.js'
 import './CaloriesTracker.css'
 
 function createActivityId() {
@@ -175,6 +177,35 @@ function ActivityHistory({ activities, onUpdateDuration }) {
   )
 }
 
+function FoodIntakeSummary({ today }) {
+  const entries = normalizeFoodIntake(readLocalJson(FOOD_INTAKE_STORAGE_KEY, []))
+    .filter((record) => record.date === today)
+    .sort((a, b) => a.id.localeCompare(b.id))
+  const totalCalories = getFoodIntakeCaloriesForDate(entries, today)
+
+  return (
+    <section className="panel calorie-intake-panel" aria-labelledby="food-intake-title">
+      <div className="calorie-panel-heading">
+        <div><h2 id="food-intake-title">Logged food intake</h2><p>Recipe estimates recorded only after you explicitly log a meal.</p></div>
+        <span className="calorie-panel-icon"><Utensils size={17} /></span>
+      </div>
+      <div className="calorie-intake-total"><strong>{totalCalories.toLocaleString()} <small>estimated kcal</small></strong><span>Today · {entries.length} logged meal{entries.length === 1 ? '' : 's'}</span></div>
+      {entries.length ? (
+        <div className="calorie-history-list">
+          {entries.map((record) => (
+            <article className="calorie-history-row" key={record.id}>
+              <span className="calorie-history-icon"><Utensils size={16} /></span>
+              <div className="calorie-history-main"><strong>{record.recipeName}</strong><p>{record.category} · explicitly logged as eaten</p></div>
+              <div className="calorie-history-result"><strong>{record.caloriesKcal === null ? '—' : `~${record.caloriesKcal.toLocaleString()}`}</strong><span>{record.caloriesKcal === null ? 'Estimate unavailable' : 'estimated kcal'}</span></div>
+            </article>
+          ))}
+        </div>
+      ) : <p className="calorie-history-empty">No recipes logged today. Planned meals and calculator totals are not counted as eaten.</p>}
+      <Link className="text-action" to="/nutrition">Open Diet Planner</Link>
+    </section>
+  )
+}
+
 export default function CaloriesTrackerPage() {
   const { profile, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError } = useAppData()
   const today = getTodayKey()
@@ -198,6 +229,7 @@ export default function CaloriesTrackerPage() {
         <WeeklySummary records={calorieActivities} today={today} />
       </div>
       <ActivityHistory activities={calorieActivities} onUpdateDuration={updateCalorieActivityDuration} />
+      <FoodIntakeSummary today={today} />
     </div>
   )
 }

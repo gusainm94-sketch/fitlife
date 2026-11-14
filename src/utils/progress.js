@@ -1,6 +1,6 @@
 import { DAILY_HABITS, DAILY_WATER_GOAL_ML } from '../data/dailyTrackers.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
-import { INDIAN_MEALS } from '../data/meals.js'
+import { normalizeFoodIntake } from '../data/foodIntake.js'
 import { readLocalJson, writeLocalJson } from './localStorage.js'
 
 export const REWARDS_STORAGE_KEY = 'fitlife.earned-badges.v1'
@@ -176,6 +176,7 @@ export function buildDailyProgressRecords({
   waterHistory = {},
   habitHistory = {},
   mealHistory = {},
+  foodIntakeHistory = [],
   workoutProgress = {},
   calorieHistory = [],
   fitnessTrackerRecords = [],
@@ -199,6 +200,8 @@ export function buildDailyProgressRecords({
       dates.add(record.date)
     }
   }
+  const foodIntake = normalizeFoodIntake(foodIntakeHistory)
+  for (const record of foodIntake) dates.add(record.date)
 
   const workoutRecords = getWorkoutActivityRecords(workoutProgress)
   Object.keys(workoutRecords).forEach((date) => dates.add(date))
@@ -210,7 +213,6 @@ export function buildDailyProgressRecords({
       (trackerWorkoutMinutesByDate.get(record.date) ?? 0) + record.workoutMinutes,
     )
   }
-  const mealById = new Map(INDIAN_MEALS.map((meal) => [meal.id, meal]))
   const caloriesByDate = new Map()
   const seenCalorieIds = new Set()
   for (const activity of calorieHistory) {
@@ -224,18 +226,24 @@ export function buildDailyProgressRecords({
       : 0
     caloriesByDate.set(activity.date, (caloriesByDate.get(activity.date) ?? 0) + calories)
   }
+  const intakeCaloriesByDate = new Map()
+  for (const record of foodIntake) {
+    if (record.caloriesKcal === null) continue
+    intakeCaloriesByDate.set(
+      record.date,
+      (intakeCaloriesByDate.get(record.date) ?? 0) + record.caloriesKcal,
+    )
+  }
 
   return [...dates].sort().map((date) => {
     const waterRecord = waterHistory[date]
     const habitRecord = habitHistory[date]
-    const meals = mealHistory[date] && typeof mealHistory[date] === 'object' ? mealHistory[date] : {}
-    const mealsConsumed = Object.values(meals).reduce((total, mealId) => total + (mealById.get(mealId)?.calories ?? 0), 0)
     const completedHabits = DAILY_HABITS.filter(({ id }) => habitRecord?.data?.[id] === true).length
     const workout = workoutRecords[date] ?? {}
 
     return {
       date,
-      caloriesConsumedKcal: mealsConsumed,
+      caloriesConsumedKcal: intakeCaloriesByDate.get(date) ?? 0,
       caloriesBurnedKcal: caloriesByDate.get(date) ?? 0,
       waterMl: Number.isFinite(waterRecord?.data?.totalMl) ? waterRecord.data.totalMl : 0,
       completedHabits,
@@ -251,7 +259,6 @@ export function buildDailyProgressRecords({
         : null,
       completedGoals: Number((waterRecord?.data?.totalMl ?? 0) >= DAILY_WATER_GOAL_ML)
         + Number(completedHabits === DAILY_HABITS.length),
-      meals,
     }
   })
 }

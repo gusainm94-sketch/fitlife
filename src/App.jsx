@@ -14,6 +14,7 @@ import MembershipPage from './pages/MembershipPage.jsx'
 import CaloriesTrackerPage from './pages/CaloriesTrackerPage.jsx'
 import MusicPage from './pages/MusicPage.jsx'
 import FitnessTrackerPage from './pages/FitnessTrackerPage.jsx'
+import NutritionCalculatorPage from './pages/NutritionCalculatorPage.jsx'
 import { MembershipProvider } from './context/MembershipContext.jsx'
 import './App.css'
 
@@ -39,6 +40,7 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="/workouts" element={<WorkoutPlannerPage />} />
           <Route path="/nutrition" element={<DietPlannerPage />} />
+          <Route path="/nutrition-calculator" element={<NutritionCalculatorPage />} />
           <Route path="/bmi-profile" element={<BmiProfilePage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/calories" element={<CaloriesTrackerPage />} />

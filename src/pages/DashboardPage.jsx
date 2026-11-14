@@ -16,10 +16,11 @@ import {
 } from '../data/dailyTrackers.js'
 import { isMembershipExpired } from '../data/membership.js'
 import { useMembership } from '../hooks/useMembership.js'
-import { readLocalJsonEntries } from '../utils/localStorage.js'
+import { readLocalJson, readLocalJsonEntries } from '../utils/localStorage.js'
 import { buildDailyProgressRecords, getProgressPeriodSummary, getWeekDateKeys, getWeekId } from '../utils/progress.js'
 import { WEEKDAYS } from '../data/workouts.js'
 import { getFitnessTrackerDailySummary } from '../data/fitnessTracker.js'
+import { FOOD_INTAKE_STORAGE_KEY } from '../data/foodIntake.js'
 
 const statIcons = {
   'Calories consumed': Flame,
@@ -74,7 +75,7 @@ function TodayPanel({ today, fitness }) {
     <section className="panel" aria-labelledby="today-heading">
       <div className="panel-heading"><div><h2 id="today-heading">Today at a glance</h2><p>A little progress goes a long way</p></div><span className="stat-icon"><Target size={16} /></span></div>
       <div className="today-summary">
-        <div className="summary-item"><span className="summary-icon"><Flame size={16} /></span><span className="summary-copy"><strong>Calories consumed</strong><span>Estimate from selected meals</span></span><span className="summary-value">{today.caloriesConsumedKcal.toLocaleString()} kcal</span></div>
+        <div className="summary-item"><span className="summary-icon"><Flame size={16} /></span><span className="summary-copy"><strong>Calories consumed</strong><span>Estimated nutrition from explicitly logged recipes</span></span><span className="summary-value">{today.caloriesConsumedKcal.toLocaleString()} kcal</span></div>
         <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Calories burned</strong><span>{fitness.caloriesReadings ? 'Includes manually entered fitness tracker calories' : today.caloriesBurnedKcal ? 'MET-based estimates from your activity log' : 'No activity estimate recorded yet'}</span></span><span className="summary-value">{today.caloriesBurnedKcal.toLocaleString()} kcal</span></div>
         <div className="summary-item"><span className="summary-icon"><Footprints size={16} /></span><span className="summary-copy"><strong>Manual tracker steps</strong><span>Fitness tracker entry for today</span></span><span className="summary-value">{fitness.stepsReadings ? fitness.steps.toLocaleString() : '—'}</span></div>
         <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Manual active minutes</strong><span>Fitness tracker entry for today</span></span><span className="summary-value">{fitness.activeMinutesReadings ? `${fitness.activeMinutes.toLocaleString()} min` : '—'}</span></div>
@@ -120,6 +121,7 @@ export default function DashboardPage() {
     waterHistory,
     habitHistory,
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
+    foodIntakeHistory: readLocalJson(FOOD_INTAKE_STORAGE_KEY, []),
     workoutProgress,
     calorieHistory: calorieActivities,
     fitnessTrackerRecords,
@@ -141,7 +143,7 @@ export default function DashboardPage() {
   const weekly = getProgressPeriodSummary(progressRecords, mondayKey, todayKey)
   const monthly = getProgressPeriodSummary(progressRecords, monthStartKey, todayKey)
   const dashboardStats = [
-    { label: 'Calories consumed', value: today.caloriesConsumedKcal.toLocaleString(), unit: 'kcal', note: 'Estimate from selected meals', trend: 'steady' },
+    { label: 'Calories consumed', value: today.caloriesConsumedKcal.toLocaleString(), unit: 'kcal', note: 'Estimated from logged meals only', trend: 'steady' },
     { label: 'Calories burned', value: today.caloriesBurnedKcal.toLocaleString(), unit: 'kcal', note: today.caloriesBurnedKcal ? 'MET-based activity estimate' : 'No estimate recorded', trend: 'steady' },
     { label: 'Workout completion', value: `${today.workoutPercent}`, unit: '%', note: today.completedWorkout ? 'Workout completed' : 'Saved exercises today', trend: 'steady' },
     { label: 'Water intake', value: today.waterMl.toLocaleString(), unit: 'ml', note: `Daily goal · ${DAILY_WATER_GOAL_ML.toLocaleString()} ml`, trend: 'steady' },

@@ -14,8 +14,9 @@ import {
 } from '../data/dailyTrackers.js'
 import { calculateBMI, getBMICategory } from '../utils/bmi.js'
 import { formatDateKey, formatToday, getTodayKey } from '../utils/date.js'
-import { readLocalJsonEntries } from '../utils/localStorage.js'
+import { readLocalJson, readLocalJsonEntries } from '../utils/localStorage.js'
 import { buildDailyProgressRecords, getProgressPeriodSummary, getWeekId, getWorkoutProgress } from '../utils/progress.js'
+import { FOOD_INTAKE_STORAGE_KEY } from '../data/foodIntake.js'
 
 function ProgressBar({ label, value, detail, icon: Icon, tone = '' }) {
   return (
@@ -68,6 +69,7 @@ export default function ProgressPage() {
     waterHistory,
     habitHistory,
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
+    foodIntakeHistory: readLocalJson(FOOD_INTAKE_STORAGE_KEY, []),
     workoutProgress,
     calorieHistory: calorieActivities,
     fitnessTrackerRecords,
@@ -100,7 +102,7 @@ export default function ProgressPage() {
       </section>
 
       <section className="progress-metric-grid period-summary-grid" aria-label="Historical progress summaries">
-        <ProgressBar label="This week · tracked days" value={weeklySummary.trackedDays} detail={`${weeklySummary.caloriesConsumedKcal.toLocaleString()} estimated meal kcal · ${weeklySummary.averageWaterMl.toLocaleString()} ml average water`} icon={Activity} />
+        <ProgressBar label="This week · tracked days" value={weeklySummary.trackedDays} detail={`${weeklySummary.caloriesConsumedKcal.toLocaleString()} logged meal kcal · ${weeklySummary.averageWaterMl.toLocaleString()} ml average water`} icon={Activity} />
         <ProgressBar label="This month · tracked days" value={monthlySummary.trackedDays} detail={`${monthlySummary.completedWorkouts} completed workouts · ${monthlySummary.averageHabitPercent}% average habit completion`} icon={Flame} />
       </section>
 
@@ -119,7 +121,7 @@ export default function ProgressPage() {
         {historyRows.length ? (
           <div className="progress-history-scroll">
             <table className="progress-history-table">
-              <thead><tr><th>Date</th><th>Meal estimate</th><th>Calories burned</th><th>Exercises</th><th>Workout</th><th>Tracker workout</th><th>Water</th><th>Habits</th><th>Goals</th></tr></thead>
+              <thead><tr><th>Date</th><th>Logged meal kcal</th><th>Calories burned</th><th>Exercises</th><th>Workout</th><th>Tracker workout</th><th>Water</th><th>Habits</th><th>Goals</th></tr></thead>
               <tbody>{historyRows.map((row) => (
                 <tr key={row.date}>
                   <th scope="row">{formatDateKey(row.date)}</th>
@@ -136,7 +138,7 @@ export default function ProgressPage() {
             </table>
           </div>
         ) : <p className="progress-history-empty">Your saved daily records will appear here as you use FitLife.</p>}
-        <p className="progress-chart-note">Meal calories are estimates from selected meals. Burned calories combine saved activity estimates with manually entered fitness tracker calories; no value is inferred when duration or weight is missing.</p>
+        <p className="progress-chart-note">Meal calories are estimated from recipes explicitly logged as eaten; planned meals are not counted as intake. Burned calories combine saved activity estimates with manually entered fitness tracker calories.</p>
         <span className="visually-hidden">{currentRecord ? `Today's recorded meal estimate is ${currentRecord.caloriesConsumedKcal} kcal.` : 'No progress record is saved for today.'}</span>
       </section>
     </div>

@@ -53,7 +53,7 @@ test('rest days are not represented as failed workout completion', () => {
   assert.equal(getWorkoutProgress({}, sunday).dailyPercent, null)
 })
 
-test('daily and period history uses saved dates and meal estimates without filling gaps', () => {
+test('meal plans do not count as consumed food without an explicit recipe log', () => {
   const monday = new Date(2026, 10, 9)
   const weekId = getWeekId(monday)
   const workouts = {}
@@ -75,7 +75,7 @@ test('daily and period history uses saved dates and meal estimates without filli
   })
 
   assert.deepEqual(records.map(({ date }) => date), ['2026-11-09', '2026-11-10', '2026-11-12'])
-  assert.equal(records[0].caloriesConsumedKcal, 800)
+  assert.equal(records[0].caloriesConsumedKcal, 0)
   assert.equal(records[0].completedWorkout, true)
   assert.equal(records[0].workoutPercent, 100)
   assert.equal(records[0].completedExercises, 4)
@@ -85,12 +85,44 @@ test('daily and period history uses saved dates and meal estimates without filli
   const summary = getProgressPeriodSummary(records, '2026-11-09', '2026-11-12')
   assert.deepEqual(summary, {
     trackedDays: 3,
-    caloriesConsumedKcal: 1230,
+    caloriesConsumedKcal: 0,
     caloriesBurnedKcal: 0,
     completedWorkouts: 1,
     completedExercises: 4,
     averageWaterMl: 417,
     averageHabitPercent: 13,
+  })
+
+  test('daily progress counts unique explicitly logged recipe calories and ignores unavailable values', () => {
+    const loggedMeal = {
+      id: 'food:2026-11-09:breakfast:recipe-1',
+      recipeId: 'recipe-1',
+      recipeName: 'Oats bowl',
+      category: 'breakfast',
+      date: '2026-11-09',
+      caloriesKcal: 320,
+      nutrients: { caloriesKcal: 320, proteinG: 12, carbsG: 40, fatG: 8, fiberG: 6 },
+    }
+    const records = buildDailyProgressRecords({
+      mealHistory: { '2026-11-09': { breakfast: 'poha' } },
+      foodIntakeHistory: [
+        loggedMeal,
+        loggedMeal,
+        {
+          ...loggedMeal,
+          id: 'food:2026-11-10:lunch:recipe-2',
+          recipeId: 'recipe-2',
+          date: '2026-11-10',
+          caloriesKcal: null,
+          nutrients: { caloriesKcal: null, proteinG: null, carbsG: null, fatG: null, fiberG: null },
+        },
+      ],
+    })
+
+    assert.deepEqual(records.map(({ date, caloriesConsumedKcal }) => [date, caloriesConsumedKcal]), [
+      ['2026-11-09', 320],
+      ['2026-11-10', 0],
+    ])
   })
 })
 
