@@ -11,6 +11,7 @@ import HabitsPage from './pages/HabitsPage.jsx'
 import ProgressPage from './pages/ProgressPage.jsx'
 import RewardsPage from './pages/RewardsPage.jsx'
 import MembershipPage from './pages/MembershipPage.jsx'
+import CaloriesTrackerPage from './pages/CaloriesTrackerPage.jsx'
 import { MembershipProvider } from './context/MembershipContext.jsx'
 import './App.css'
 
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/nutrition" element={<DietPlannerPage />} />
           <Route path="/bmi-profile" element={<BmiProfilePage />} />
           <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/calories" element={<CaloriesTrackerPage />} />
           <Route path="/habits" element={<HabitsPage />} />
           <Route path="/rewards" element={<RewardsPage />} />
           <Route path="/membership" element={<MembershipPage />} />

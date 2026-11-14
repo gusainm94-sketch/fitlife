@@ -94,6 +94,21 @@ test('daily and period history uses saved dates and meal estimates without filli
   })
 })
 
+test('daily progress includes saved calorie estimates once and preserves days with unestimated activities', () => {
+  const records = buildDailyProgressRecords({
+    calorieHistory: [
+      { id: 'walk-1', date: '2026-11-09', caloriesKcal: 125 },
+      { id: 'walk-1', date: '2026-11-09', caloriesKcal: 125 },
+      { id: 'manual-no-weight', date: '2026-11-10', caloriesKcal: null },
+    ],
+  })
+
+  assert.deepEqual(records.map(({ date, caloriesBurnedKcal }) => [date, caloriesBurnedKcal]), [
+    ['2026-11-09', 125],
+    ['2026-11-10', 0],
+  ])
+})
+
 test('gym levels keep the six-day split, complete rest day, and unique exercise progress', () => {
   const expectedCategories = ['Upper Body', 'Lower Body', 'Recovery', 'Full Body', 'Conditioning', 'Mobility', 'Rest']
   const allExerciseIds = new Set()

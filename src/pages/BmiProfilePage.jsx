@@ -22,6 +22,7 @@ export default function BmiProfilePage() {
   const { profile, updateProfile, profileStorageError } = useAppData()
   const [draft, setDraft] = useState(null)
   const [savedNotice, setSavedNotice] = useState(false)
+  const [weightEdited, setWeightEdited] = useState(false)
   const injuryAreas = Array.isArray(profile.injuryAreas) ? profile.injuryAreas : []
   const injuryDescription = typeof profile.injuryDescription === 'string' ? profile.injuryDescription : ''
 
@@ -35,16 +36,24 @@ export default function BmiProfilePage() {
   const category = getBMICategory(bmi)
   const isDirty = (height === '' ? profile.height !== null : Number(height) !== profile.height)
     || (weight === '' ? profile.weight !== null : Number(weight) !== profile.weight)
+    || (weightEdited && !profile.weightConfirmed)
   const markerPosition = bmi === null ? null : Math.max(0, Math.min(100, ((bmi - 15) / 25) * 100))
 
   const updateMeasurements = () => {
-    updateProfile({ ...profile, height: Number(height), weight: Number(weight) })
+    if (!updateProfile({
+      ...profile,
+      height: Number(height),
+      weight: Number(weight),
+      weightConfirmed: weightEdited ? weight !== '' : profile.weightConfirmed,
+    })) return
     setDraft(null)
+    setWeightEdited(false)
     setSavedNotice(true)
   }
 
   const handleMeasurementChange = (field) => (event) => {
     const value = event.target.value
+    if (field === 'weight') setWeightEdited(true)
     setDraft((current) => {
       const currentMatchesProfile = current && current.profileHeight === profile.height && current.profileWeight === profile.weight
       return {
@@ -107,7 +116,7 @@ export default function BmiProfilePage() {
           </div>
 
           <div className="bmi-save-row">
-            <p>{savedNotice ? <><Check size={14} /> Measurements saved to your profile.</> : isDirty ? 'Your changes are only used for this calculation until saved.' : profile.height === null || profile.weight === null ? 'Add valid measurements to calculate BMI.' : 'Using the height and weight saved in your profile.'}</p>
+            <p>{savedNotice ? <><Check size={14} /> Measurements saved to your profile.</> : isDirty ? 'Your changes are only used for this calculation until saved.' : profile.height === null || profile.weight === null ? 'Add valid measurements to calculate BMI.' : !profile.weightConfirmed ? 'Confirm your weight to use it for activity calorie estimates.' : 'Using the height and weight saved in your profile.'}</p>
             {profileStorageError && <span className="bmi-field-error" role="alert">Unable to save your profile. Check browser storage availability and try again.</span>}
             <button type="button" className="bmi-save-button" onClick={updateMeasurements} disabled={!isDirty || Boolean(heightError || weightError)}><Save size={14} /> Update saved profile</button>
           </div>

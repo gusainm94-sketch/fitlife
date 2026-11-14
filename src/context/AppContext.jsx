@@ -2,6 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DASHBOARD_STATS, normalizeProfile, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
 import { GYM_DIFFICULTIES } from '../data/workouts.js'
 import { EQUIPMENT_PREFERENCES_STORAGE_KEY, normalizeEquipmentPreferences } from '../data/equipment.js'
+import {
+  CALORIE_ACTIVITIES_STORAGE_KEY,
+  getCompletedWorkoutCalorieActivities,
+  getProfileCalorieWeight,
+  isCalorieActivity,
+  mergeCalorieActivities,
+  normalizeCalorieActivities,
+  updateCalorieActivityDurationRecord,
+} from '../data/calories.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
 import AppContext from './appContext.js'
@@ -47,11 +56,19 @@ export function AppProvider({ children, user }) {
   const initialProfile = useRef(profile)
   const [profileStorageError, setProfileStorageError] = useState(false)
   const [workoutProgress, setWorkoutProgress] = useState(loadWorkoutProgress)
+  const [savedCalorieActivities, setSavedCalorieActivities] = useState(() => (
+    normalizeCalorieActivities(readLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, []))
+  ))
+  const [calorieStorageError, setCalorieStorageError] = useState(false)
   const [equipmentPreferences, setEquipmentPreferences] = useState(() => (
     normalizeEquipmentPreferences(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null))
   ))
   const [equipmentStorageError, setEquipmentStorageError] = useState(false)
   const dashboardStats = DASHBOARD_STATS
+  const calorieActivities = useMemo(() => mergeCalorieActivities(
+    savedCalorieActivities,
+    getCompletedWorkoutCalorieActivities(workoutProgress, getProfileCalorieWeight(profile)),
+  ), [profile, savedCalorieActivities, workoutProgress])
 
   useEffect(() => {
     if (profile !== initialProfile.current) return
@@ -67,6 +84,41 @@ export function AppProvider({ children, user }) {
   useEffect(() => {
     saveNewlyEarnedBadges({ workoutProgress })
   }, [workoutProgress])
+
+  useEffect(() => {
+    if (calorieActivities.length === savedCalorieActivities.length) return
+    if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, calorieActivities)) {
+      console.error('FitLife could not save calorie activity history. Check browser storage availability.')
+    }
+  }, [calorieActivities, savedCalorieActivities.length])
+
+  const addCalorieActivity = useCallback((activity) => {
+    if (!isCalorieActivity(activity)) return false
+    const next = mergeCalorieActivities(calorieActivities, [activity])
+    if (next.length === calorieActivities.length) return false
+    if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, next)) {
+      setCalorieStorageError(true)
+      return false
+    }
+    setSavedCalorieActivities(next)
+    setCalorieStorageError(false)
+    return true
+  }, [calorieActivities])
+
+  const updateCalorieActivityDuration = useCallback((id, durationMinutes) => {
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return false
+    const current = calorieActivities.find((activity) => activity.id === id)
+    if (!current) return false
+    const updated = updateCalorieActivityDurationRecord(current, durationMinutes)
+    const next = calorieActivities.map((activity) => activity.id === id ? updated : activity)
+    if (!writeLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, next)) {
+      setCalorieStorageError(true)
+      return false
+    }
+    setSavedCalorieActivities(next)
+    setCalorieStorageError(false)
+    return true
+  }, [calorieActivities])
 
   const updateProfile = useCallback((nextProfile) => {
     const updatedProfile = normalizeProfile({ ...profile, ...nextProfile }, user.name)
@@ -130,7 +182,11 @@ export function AppProvider({ children, user }) {
     equipmentStorageError,
     workoutProgress,
     toggleWorkoutExercise,
-  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise])
+    calorieActivities,
+    addCalorieActivity,
+    updateCalorieActivityDuration,
+    calorieStorageError,
+  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

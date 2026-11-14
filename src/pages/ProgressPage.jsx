@@ -59,7 +59,7 @@ function WeightVisualization({ weight, isSampleProfile }) {
 }
 
 export default function ProgressPage() {
-  const { profile, workoutProgress } = useAppData()
+  const { profile, workoutProgress, calorieActivities } = useAppData()
   const { data: water, history: waterHistory } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
   const { data: habits, history: habitHistory } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
   const workouts = getWorkoutProgress(workoutProgress)
@@ -69,6 +69,7 @@ export default function ProgressPage() {
     habitHistory,
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
     workoutProgress,
+    calorieHistory: calorieActivities,
   })
   const weekStart = getWeekId()
   const monthStart = `${todayKey.slice(0, 7)}-01`
@@ -133,7 +134,7 @@ export default function ProgressPage() {
             </table>
           </div>
         ) : <p className="progress-history-empty">Your saved daily records will appear here as you use FitLife.</p>}
-        <p className="progress-chart-note">Meal calories are estimates from selected meals. Calories burned remain zero because the app has no manual or calculated burn-estimate source and does not infer them automatically.</p>
+        <p className="progress-chart-note">Meal calories are estimates from selected meals. Burned calories include only saved activity estimates; no value is inferred when duration or weight is missing.</p>
         <span className="visually-hidden">{currentRecord ? `Today's recorded meal estimate is ${currentRecord.caloriesConsumedKcal} kcal.` : 'No progress record is saved for today.'}</span>
       </section>
     </div>

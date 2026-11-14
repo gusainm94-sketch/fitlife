@@ -6,6 +6,7 @@ export const DEFAULT_PROFILE = {
   age: 28,
   height: 172,
   weight: 70,
+  weightConfirmed: false,
   gender: '',
   goal: 'Strength',
   fitnessLevel: 'Beginner',
@@ -77,7 +78,7 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
       ? saved.goal.trim()
       : DEFAULT_PROFILE.goal
 
-  return {
+  const profile = {
     name: typeof saved.name === 'string' && saved.name.trim() ? saved.name.trim() : userName,
     age: normalizeOptionalNumber(saved.age, DEFAULT_PROFILE.age, 13, 120),
     height: normalizeOptionalNumber(saved.height, DEFAULT_PROFILE.height, 100, 250),
@@ -95,5 +96,18 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
       ? saved.injuryDescription
       : typeof saved.injuries === 'string' ? saved.injuries : '').slice(0, 300),
     avatar: normalizeOptionalChoice(saved.avatar, AVATAR_OPTIONS.map(({ id }) => id)),
+  }
+  const isSampleProfile = Object.keys(DEFAULT_PROFILE)
+    .filter((key) => key !== 'name' && key !== 'weightConfirmed')
+    .every((key) => JSON.stringify(profile[key]) === JSON.stringify(DEFAULT_PROFILE[key]))
+  const hasValidSavedWeight = Number.isFinite(Number(saved.weight))
+    && Number(saved.weight) >= 30
+    && Number(saved.weight) <= 350
+
+  return {
+    ...profile,
+    weightConfirmed: hasValidSavedWeight && (typeof saved.weightConfirmed === 'boolean'
+      ? saved.weightConfirmed
+      : !isSampleProfile),
   }
 }

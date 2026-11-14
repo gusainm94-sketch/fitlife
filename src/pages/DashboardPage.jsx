@@ -74,11 +74,12 @@ function TodayPanel({ today }) {
       <div className="panel-heading"><div><h2 id="today-heading">Today at a glance</h2><p>A little progress goes a long way</p></div><span className="stat-icon"><Target size={16} /></span></div>
       <div className="today-summary">
         <div className="summary-item"><span className="summary-icon"><Flame size={16} /></span><span className="summary-copy"><strong>Calories consumed</strong><span>Estimate from selected meals</span></span><span className="summary-value">{today.caloriesConsumedKcal.toLocaleString()} kcal</span></div>
-        <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Estimated calories burned</strong><span>No calorie-burn estimate is currently recorded</span></span><span className="summary-value">{today.caloriesBurnedKcal} kcal</span></div>
+        <div className="summary-item"><span className="summary-icon"><Activity size={16} /></span><span className="summary-copy"><strong>Estimated calories burned</strong><span>{today.caloriesBurnedKcal ? 'MET-based estimates from your activity log' : 'No activity estimate recorded yet'}</span></span><span className="summary-value">{today.caloriesBurnedKcal.toLocaleString()} kcal</span></div>
         <div className="summary-item"><span className="summary-icon"><Dumbbell size={16} /></span><span className="summary-copy"><strong>Today's workout</strong><span>Saved exercise completion</span></span><span className="summary-value">{today.completedWorkout ? 'Complete' : `${today.workoutPercent}%`}</span></div>
         <div className="summary-item"><span className="summary-icon"><Waves size={16} /></span><span className="summary-copy"><strong>Water intake</strong><span>{today.waterMl.toLocaleString()} of {DAILY_WATER_GOAL_ML.toLocaleString()} ml</span></span><span className="summary-value">{waterProgress}%</span></div>
         <div className="summary-item"><span className="summary-icon"><Check size={16} /></span><span className="summary-copy"><strong>Daily habits</strong><span>{today.completedHabits} of {today.totalHabits} completed</span></span><span className="summary-value">{today.habitPercent}%</span></div>
       </div>
+      <Link className="text-action" style={{ marginTop: 10 }} to="/calories">Open calorie tracker <ArrowRight size={13} /></Link>
     </section>
   )
 }
@@ -106,7 +107,7 @@ function HydrationPanel() {
 }
 
 export default function DashboardPage() {
-  const { profile, workoutProgress } = useAppData()
+  const { profile, workoutProgress, calorieActivities } = useAppData()
   const { membership } = useMembership()
   const { history: waterHistory } = useDailyRecord(WATER_STORAGE_KEY, createWaterIntake, isWaterIntake)
   const { history: habitHistory } = useDailyRecord(HABITS_STORAGE_KEY, createHabitCompletions, isHabitCompletions)
@@ -116,6 +117,7 @@ export default function DashboardPage() {
     habitHistory,
     mealHistory: readLocalJsonEntries('fitlife-diet-plan-'),
     workoutProgress,
+    calorieHistory: calorieActivities,
   })
   const todayKey = getTodayKey()
   const today = progressRecords.find(({ date }) => date === todayKey) ?? {
@@ -134,7 +136,7 @@ export default function DashboardPage() {
   const monthly = getProgressPeriodSummary(progressRecords, monthStartKey, todayKey)
   const dashboardStats = [
     { label: 'Calories consumed', value: today.caloriesConsumedKcal.toLocaleString(), unit: 'kcal', note: 'Estimate from selected meals', trend: 'steady' },
-    { label: 'Calories burned', value: today.caloriesBurnedKcal.toLocaleString(), unit: 'kcal', note: 'No estimate recorded', trend: 'steady' },
+    { label: 'Calories burned', value: today.caloriesBurnedKcal.toLocaleString(), unit: 'kcal', note: today.caloriesBurnedKcal ? 'MET-based activity estimate' : 'No estimate recorded', trend: 'steady' },
     { label: 'Workout completion', value: `${today.workoutPercent}`, unit: '%', note: today.completedWorkout ? 'Workout completed' : 'Saved exercises today', trend: 'steady' },
     { label: 'Water intake', value: today.waterMl.toLocaleString(), unit: 'ml', note: `Daily goal · ${DAILY_WATER_GOAL_ML.toLocaleString()} ml`, trend: 'steady' },
   ]
@@ -150,7 +152,7 @@ export default function DashboardPage() {
       </section>
       <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} /></div>
       <div className="lower-grid"><WorkoutPanel /><HydrationPanel /></div>
-      <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Calories burned are shown only when a recorded estimate exists; FitLife does not measure them automatically.</p>
+      <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Activity calories are estimates from recorded durations and profile weight; FitLife does not measure them automatically.</p>
     </div>
   )
 }

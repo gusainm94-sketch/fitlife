@@ -14,6 +14,7 @@ import ProfileAvatar from './ProfileAvatar.jsx'
 
 export default function ProfileEditor({ profile, onSave, onClose, saveError = false }) {
   const dialogRef = useRef(null)
+  const [weightEdited, setWeightEdited] = useState(false)
   const [form, setForm] = useState(() => ({
     name: profile.name,
     age: profile.age == null ? '' : String(profile.age),
@@ -67,6 +68,7 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
       age: form.age === '' ? null : Number(form.age),
       height: form.height === '' ? null : Number(form.height),
       weight: form.weight === '' ? null : Number(form.weight),
+      weightConfirmed: weightEdited ? form.weight !== '' : profile.weightConfirmed,
       gender: form.gender,
       goal: form.goal,
       fitnessLevel: form.fitnessLevel,
@@ -132,7 +134,8 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
             <span className="input-with-unit"><input name="height" type="number" inputMode="decimal" value={form.height} onChange={updateField} min="100" max="250" step="0.1" /><span>cm</span></span>
           </label>
           <label className="profile-field"><span className="profile-label-row">Weight <span className="profile-optional-label">Optional</span></span>
-            <span className="input-with-unit"><input name="weight" type="number" inputMode="decimal" value={form.weight} onChange={updateField} min="30" max="350" step="0.1" /><span>kg</span></span>
+            <span className="input-with-unit"><input name="weight" type="number" inputMode="decimal" value={form.weight} onChange={(event) => { updateField(event); setWeightEdited(true) }} min="30" max="350" step="0.1" /><span>kg</span></span>
+            {!profile.weightConfirmed && <small className="profile-field-hint">Update this value to use it for activity calorie estimates.</small>}
           </label>
 
           <h3 className="profile-section-heading profile-field-wide">Fitness and nutrition</h3>

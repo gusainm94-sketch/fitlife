@@ -177,6 +177,7 @@ export function buildDailyProgressRecords({
   habitHistory = {},
   mealHistory = {},
   workoutProgress = {},
+  calorieHistory = [],
 } = {}) {
   const dates = new Set()
   for (const history of [waterHistory, habitHistory]) {
@@ -187,10 +188,28 @@ export function buildDailyProgressRecords({
   for (const date of Object.keys(mealHistory)) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) dates.add(date)
   }
+  for (const activity of calorieHistory) {
+    if (activity && typeof activity.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(activity.date)) {
+      dates.add(activity.date)
+    }
+  }
 
   const workoutRecords = getWorkoutActivityRecords(workoutProgress)
   Object.keys(workoutRecords).forEach((date) => dates.add(date))
   const mealById = new Map(INDIAN_MEALS.map((meal) => [meal.id, meal]))
+  const caloriesByDate = new Map()
+  const seenCalorieIds = new Set()
+  for (const activity of calorieHistory) {
+    if (!activity || typeof activity.date !== 'string') continue
+    if (typeof activity.id === 'string') {
+      if (seenCalorieIds.has(activity.id)) continue
+      seenCalorieIds.add(activity.id)
+    }
+    const calories = Number.isFinite(activity.caloriesKcal) && activity.caloriesKcal >= 0
+      ? activity.caloriesKcal
+      : 0
+    caloriesByDate.set(activity.date, (caloriesByDate.get(activity.date) ?? 0) + calories)
+  }
 
   return [...dates].sort().map((date) => {
     const waterRecord = waterHistory[date]
@@ -203,7 +222,7 @@ export function buildDailyProgressRecords({
     return {
       date,
       caloriesConsumedKcal: mealsConsumed,
-      caloriesBurnedKcal: 0,
+      caloriesBurnedKcal: caloriesByDate.get(date) ?? 0,
       waterMl: Number.isFinite(waterRecord?.data?.totalMl) ? waterRecord.data.totalMl : 0,
       completedHabits,
       totalHabits: DAILY_HABITS.length,

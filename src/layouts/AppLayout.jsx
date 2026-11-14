@@ -14,6 +14,7 @@ const THEME_STORAGE_KEY = 'fitlife.theme'
 const navigation = [
   { label: 'Overview', path: '/', icon: House },
   { label: 'Workouts', path: '/workouts', icon: Dumbbell },
+  { label: 'Calories', path: '/calories', icon: Flame },
   { label: 'Nutrition', path: '/nutrition', icon: Leaf },
   { label: 'BMI & profile', path: '/bmi-profile', icon: Scale },
   { label: 'Progress', path: '/progress', icon: ChartNoAxesCombined },
