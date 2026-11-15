@@ -56,12 +56,12 @@ function ActivityPanel({ records, weekly, monthly }) {
       <div className="chart-wrap">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={activityData} margin={{ top: 15, right: 7, left: -20, bottom: 0 }}>
-            <defs><linearGradient id="activityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4c9468" stopOpacity={0.2} /><stop offset="95%" stopColor="#4c9468" stopOpacity={0.01} /></linearGradient></defs>
+            <defs><linearGradient id="activityFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4F9B72" stopOpacity={0.24} /><stop offset="95%" stopColor="#4F9B72" stopOpacity={0.01} /></linearGradient></defs>
             <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="3 4" />
             <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted)', fontSize: 10 }} dy={9} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted)', fontSize: 9 }} ticks={[0, 25, 50, 75, 100]} domain={[0, 100]} />
             <Tooltip contentStyle={{ border: '1px solid var(--line)', borderRadius: 9, background: 'var(--surface)', color: 'var(--ink)', boxShadow: '0 6px 20px #173c2c12', fontSize: 11 }} formatter={(value) => [`${value}%`, 'Workout']} />
-            <Area type="monotone" dataKey="minutes" stroke="#43865d" strokeWidth={2.3} fill="url(#activityFill)" activeDot={{ r: 4, fill: '#43865d', stroke: 'var(--surface)', strokeWidth: 2 }} />
+            <Area type="monotone" dataKey="minutes" stroke="#4F9B72" strokeWidth={2.3} fill="url(#activityFill)" activeDot={{ r: 4, fill: '#4F9B72', stroke: 'var(--surface)', strokeWidth: 2 }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

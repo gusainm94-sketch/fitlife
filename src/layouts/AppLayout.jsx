@@ -1,4 +1,4 @@
-import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CircleUserRound, CreditCard, Calculator, Droplets, Dumbbell, Flame, House, Leaf, LogOut, MoreHorizontal, Moon, Music2, Pencil, Sun, Trophy, Watch, X } from 'lucide-react'
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CircleUserRound, CreditCard, Calculator, Droplets, Dumbbell, Flame, House, Leaf, LogOut, MoreHorizontal, Moon, Music2, Sun, Trophy, Watch, X } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
@@ -8,6 +8,7 @@ import ProfileEditor from '../components/ProfileEditor.jsx'
 import { formatToday } from '../utils/date.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { useMembership } from '../hooks/useMembership.js'
+import { VISITED_SECTIONS_STORAGE_KEY } from '../utils/progress.js'
 
 const THEME_STORAGE_KEY = 'fitlife.theme'
 
@@ -80,6 +81,12 @@ export default function AppLayout() {
     document.documentElement.dataset.theme = theme
     writeLocalJson(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    const visited = readLocalJson(VISITED_SECTIONS_STORAGE_KEY, [])
+    if (!Array.isArray(visited) || visited.includes(pathname)) return
+    writeLocalJson(VISITED_SECTIONS_STORAGE_KEY, [...visited, pathname])
+  }, [pathname])
 
   useEffect(() => {
     const refresh = () => refreshCalendarDate((current) => current + 1)
@@ -165,14 +172,14 @@ export default function AppLayout() {
         </nav>
         <div className="sidebar-spacer" />
         <div className="sidebar-tip"><div className="tip-icon"><Flame size={16} /></div><strong>Keep your rhythm</strong><p>Consistency is built one small choice at a time.</p></div>
-        <div className="user-mini"><ProfileAvatar avatar={profile.avatar} size={34} className="user-avatar" /><span className="user-mini-copy"><strong>{profile.name}</strong><small>{membership.plan} membership</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={14} /></button></div>
+        <div className="user-mini"><ProfileAvatar avatar={profile.avatar} size={34} className="user-avatar" /><span className="user-mini-copy"><strong>{profile.name}</strong><small>{membership.plan} membership</small></span><button className="profile-edit-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><CircleUserRound size={15} /></button></div>
       </aside>
 
       <main id="main-content" className="main-area">
         <header className="topbar">
           <NavLink className="mobile-brand" to="/" aria-label="FitLife overview"><BrandMark />fitlife</NavLink>
           <div className="breadcrumb">Workspace <span aria-hidden="true"> / </span> <strong>{currentTitle(pathname)}</strong></div>
-          <div className="topbar-actions"><span className="date-label"><CalendarDays size={14} /> {formatToday()}</span><button className="icon-button theme-toggle" type="button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}</button><span className="icon-status" aria-label="Notifications" title="Notifications are not available in this demo"><Bell size={16} /></span><button className="icon-button profile-topbar-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><Pencil size={15} /></button><button className="logout-button" type="button" onClick={handleLogout}><LogOut size={15} /><span>Log out</span></button></div>
+          <div className="topbar-actions"><span className="date-label"><CalendarDays size={14} /> {formatToday()}</span><button className="icon-button theme-toggle" type="button" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme((current) => current === 'light' ? 'dark' : 'light')}>{theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}</button><span className="icon-status" aria-label="Notifications" title="Notifications are not available in this demo"><Bell size={16} /></span><button className="icon-button profile-topbar-button" type="button" aria-label="Edit profile" title="Edit profile" onClick={openProfileEditor}><CircleUserRound size={16} /></button><button className="logout-button" type="button" onClick={handleLogout}><LogOut size={15} /><span>Log out</span></button></div>
         </header>
         <Outlet />
       </main>

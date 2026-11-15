@@ -4,13 +4,34 @@ import { normalizeFoodIntake } from '../data/foodIntake.js'
 import { readLocalJson, writeLocalJson } from './localStorage.js'
 
 export const REWARDS_STORAGE_KEY = 'fitlife.earned-badges.v1'
+export const ACHIEVEMENT_DETAILS_STORAGE_KEY = 'fitlife.achievement-details.v1'
+export const VISITED_SECTIONS_STORAGE_KEY = 'fitlife.visited-sections.v1'
 export const BADGE_UPDATE_EVENT = 'fitlife:badges-updated'
 
 export const BADGES = [
   { id: 'first-workout', name: 'First Workout', description: 'Complete every exercise in your first workout session.', icon: 'dumbbell' },
-  { id: 'hydration-hero', name: 'Hydration Hero', description: 'Reach your daily water goal of 2,000 ml.', icon: 'droplets' },
-  { id: 'habit-builder', name: 'Habit Builder', description: 'Complete all daily habits.', icon: 'check' },
-  { id: 'workout-champion', name: 'Workout Champion', description: 'Complete five workout sessions.', icon: 'trophy' },
+  { id: 'hydration-hero', name: 'Hydration Hero', description: 'Reach your daily water goal of 2,000 ml.', icon: 'droplets', legacy: true },
+  { id: 'habit-builder', name: 'Habit Builder · Legacy', description: 'Complete all daily habits.', icon: 'check', legacy: true },
+  { id: 'workout-champion', name: 'Workout Champion · Legacy', description: 'Complete five workout sessions.', icon: 'trophy', legacy: true },
+  { id: 'workout-regular', name: 'Workout Regular', description: 'Complete 5 workouts.', icon: 'dumbbell', target: 5 },
+  { id: 'fitness-enthusiast', name: 'Fitness Enthusiast', description: 'Complete 10 workouts.', icon: 'flame', target: 10 },
+  { id: 'workout-champion-25', name: 'Workout Champion', description: 'Complete 25 workouts.', icon: 'trophy', target: 25 },
+  { id: 'weekly-warrior', name: 'Weekly Warrior', description: 'Complete workouts on 5 different days in one week.', icon: 'calendar', target: 5 },
+  { id: 'consistency-king', name: 'Consistency King', description: 'Maintain a 7-day workout streak.', icon: 'flame', target: 7 },
+  { id: 'first-healthy-meal', name: 'First Healthy Meal', description: 'Log your first meal as eaten.', icon: 'utensils', target: 1 },
+  { id: 'healthy-eating', name: 'Healthy Eating', description: 'Log meals on 5 different days.', icon: 'utensils', target: 5 },
+  { id: 'nutrition-explorer', name: 'Nutrition Explorer', description: 'Save 5 different meal plans.', icon: 'leaf', target: 5 },
+  { id: 'meal-planner', name: 'Meal Planner', description: 'Create your first diet chart.', icon: 'calendar', target: 1 },
+  { id: 'first-glass', name: 'First Glass', description: 'Record your first water intake.', icon: 'droplets', target: 1 },
+  { id: 'hydration-habit', name: 'Hydration Habit', description: 'Reach your daily water goal for 3 days.', icon: 'droplets', target: 3 },
+  { id: 'hydration-champion', name: 'Hydration Champion', description: 'Reach your daily water goal for 7 days.', icon: 'trophy', target: 7 },
+  { id: 'first-step', name: 'First Step', description: 'Complete your first habit.', icon: 'check', target: 1 },
+  { id: 'habit-builder-10', name: 'Habit Builder', description: 'Complete 10 habits.', icon: 'check', target: 10 },
+  { id: 'consistency-matters', name: 'Consistency Matters', description: 'Maintain a 7-day habit streak.', icon: 'calendar', target: 7 },
+  { id: 'progress-tracker', name: 'Progress Tracker', description: 'Record your first progress entry.', icon: 'chart', target: 1 },
+  { id: 'getting-started', name: 'Getting Started', description: 'Complete your profile.', icon: 'user', target: 1 },
+  { id: 'goal-setter', name: 'Goal Setter', description: 'Set your fitness goal.', icon: 'target', target: 1 },
+  { id: 'fitlife-explorer', name: 'FitLife Explorer', description: 'Visit all major FitLife sections.', icon: 'star', target: 9 },
 ]
 
 function getDayProgress(workoutProgress, mode, weekId, dayId, difficulty = 'Beginner') {
@@ -296,17 +317,248 @@ export function getEligibleBadgeIds({ workoutProgress = {}, waterRecord, habitRe
   return BADGES.filter(({ id }) => eligible[id]).map(({ id }) => id)
 }
 
+function isDateKey(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+function dateKeyForWorkoutSession(session) {
+  if (!session || !isDateKey(session.weekId)) return null
+  const dayIndex = WEEKDAYS.findIndex(({ id }) => id === session.dayId)
+  if (dayIndex < 0) return null
+  return getWeekDateKeys(session.weekId)[dayIndex]
+}
+
+function getLongestDateStreak(dateKeys) {
+  const sorted = [...new Set(dateKeys.filter(isDateKey))].sort()
+  let longest = 0
+  let current = 0
+  let previous = null
+  for (const dateKey of sorted) {
+    const date = new Date(`${dateKey}T00:00:00`)
+    const previousDate = previous ? new Date(`${previous}T00:00:00`) : null
+    const difference = previousDate ? Math.round((date - previousDate) / 86400000) : null
+    current = difference === 1 ? current + 1 : 1
+    longest = Math.max(longest, current)
+    previous = dateKey
+  }
+  return longest
+}
+
+function getDatedDataRecords(history = {}) {
+  return Object.values(history).filter((record) => isDatedRecord(record))
+}
+
+function hasCompleteProfile(profile, profileSaved) {
+  return Boolean(profileSaved && profile
+    && typeof profile.name === 'string' && profile.name.trim()
+    && Number.isFinite(profile.age)
+    && Number.isFinite(profile.height)
+    && Number.isFinite(profile.weight)
+    && typeof profile.goal === 'string' && profile.goal.trim()
+    && typeof profile.fitnessLevel === 'string' && profile.fitnessLevel.trim())
+}
+
+export function getAchievementContext({
+  workoutProgress = {},
+  waterRecord,
+  habitRecord,
+  waterHistory = {},
+  habitHistory = {},
+  foodIntake = [],
+  dietCharts = [],
+  profile = null,
+  profileSaved = false,
+  visitedSections = [],
+  progressRecords = [],
+} = {}) {
+  const workoutSessions = getCompletedWorkoutSessions(workoutProgress)
+  const workoutDates = workoutSessions.map(dateKeyForWorkoutSession).filter(Boolean)
+  const workoutDatesByWeek = new Map()
+  workoutSessions.forEach((session) => {
+    const date = dateKeyForWorkoutSession(session)
+    if (!date) return
+    const dates = workoutDatesByWeek.get(session.weekId) ?? new Set()
+    dates.add(date)
+    workoutDatesByWeek.set(session.weekId, dates)
+  })
+  const weeklyWorkoutDays = Math.max(0, ...[...workoutDatesByWeek.values()].map((dates) => dates.size))
+
+  const waterRecordsByDate = new Map(getDatedDataRecords(waterHistory).map((record) => [record.date, record]))
+  if (waterRecord?.date && waterRecord?.data) waterRecordsByDate.set(waterRecord.date, waterRecord)
+  const waterRecords = [...waterRecordsByDate.values()]
+  const hydrationDates = [...new Set(waterRecords
+    .filter(({ data }) => Number(data?.totalMl) >= DAILY_WATER_GOAL_ML)
+    .map(({ date }) => date))]
+  const waterEntryDates = [...new Set(waterRecords
+    .filter(({ data }) => Number(data?.totalMl) > 0)
+    .map(({ date }) => date))]
+
+  const habitRecordsByDate = new Map(getDatedDataRecords(habitHistory).map((record) => [record.date, record]))
+  if (habitRecord?.date && habitRecord?.data) habitRecordsByDate.set(habitRecord.date, habitRecord)
+  const habitRecords = [...habitRecordsByDate.values()]
+  const habitCompletionDates = [...new Set(habitRecords
+    .filter(({ data }) => DAILY_HABITS.every(({ id }) => data?.[id] === true))
+    .map(({ date }) => date))]
+  const habitCompletedTotal = habitRecords.reduce((total, record) => (
+    total + DAILY_HABITS.filter(({ id }) => record.data?.[id] === true).length
+  ), 0)
+
+  const safeFoodIntake = normalizeFoodIntake(foodIntake)
+  const mealDates = [...new Set(safeFoodIntake.map(({ date }) => date))]
+  const majorSections = ['/', '/workouts', '/nutrition', '/fitness-tracker', '/progress', '/habits', '/rewards', '/membership', '/bmi-profile']
+  const visited = new Set(Array.isArray(visitedSections) ? visitedSections : [])
+  const legacyEligible = getEligibleBadgeIds({ workoutProgress, waterRecord, habitRecord })
+  const eligible = new Set(legacyEligible)
+  const activity = {
+    completedWorkouts: workoutSessions.length,
+    weeklyWorkoutDays,
+    workoutStreak: getLongestDateStreak(workoutDates),
+    firstHealthyMeal: safeFoodIntake.length,
+    healthyEatingDays: mealDates.length,
+    savedMealPlans: Array.isArray(dietCharts) ? dietCharts.length : 0,
+    hydrationDays: hydrationDates.length,
+    waterEntryDays: waterEntryDates.length,
+    firstHabit: habitCompletedTotal,
+    completedHabits: habitCompletedTotal,
+    habitStreak: getLongestDateStreak(habitCompletionDates),
+    progressEntries: Array.isArray(progressRecords) ? progressRecords.length : 0,
+    completeProfile: Number(hasCompleteProfile(profile, profileSaved)),
+    goalSet: Number(Boolean(profileSaved && typeof profile?.goal === 'string' && profile.goal.trim())),
+    visitedSections: majorSections.filter((section) => visited.has(section)).length,
+  }
+
+  const conditions = {
+    'workout-regular': activity.completedWorkouts >= 5,
+    'fitness-enthusiast': activity.completedWorkouts >= 10,
+    'workout-champion-25': activity.completedWorkouts >= 25,
+    'weekly-warrior': activity.weeklyWorkoutDays >= 5,
+    'consistency-king': activity.workoutStreak >= 7,
+    'first-healthy-meal': activity.firstHealthyMeal >= 1,
+    'healthy-eating': activity.healthyEatingDays >= 5,
+    'nutrition-explorer': activity.savedMealPlans >= 5,
+    'meal-planner': activity.savedMealPlans >= 1,
+    'first-glass': activity.waterEntryDays >= 1,
+    'hydration-habit': activity.hydrationDays >= 3,
+    'hydration-champion': activity.hydrationDays >= 7,
+    'first-step': activity.firstHabit >= 1,
+    'habit-builder-10': activity.completedHabits >= 10,
+    'consistency-matters': activity.habitStreak >= 7,
+    'progress-tracker': activity.progressEntries >= 1,
+    'getting-started': activity.completeProfile === 1,
+    'goal-setter': activity.goalSet === 1,
+    'fitlife-explorer': activity.visitedSections >= majorSections.length,
+  }
+  Object.entries(conditions).forEach(([id, isEligible]) => {
+    if (isEligible) eligible.add(id)
+  })
+
+  return { activity, eligibleIds: [...eligible] }
+}
+
+export function getAchievementProgress({
+  workoutProgress = {},
+  waterRecord,
+  habitRecord,
+  waterHistory,
+  habitHistory,
+  foodIntake,
+  dietCharts,
+  profile,
+  profileSaved,
+  visitedSections,
+  progressRecords,
+} = {}) {
+  const { activity } = getAchievementContext({
+    workoutProgress,
+    waterRecord,
+    habitRecord,
+    waterHistory,
+    habitHistory,
+    foodIntake,
+    dietCharts,
+    profile,
+    profileSaved,
+    visitedSections,
+    progressRecords,
+  })
+  return {
+    'workout-regular': { current: activity.completedWorkouts, target: 5, label: 'workouts' },
+    'fitness-enthusiast': { current: activity.completedWorkouts, target: 10, label: 'workouts' },
+    'workout-champion-25': { current: activity.completedWorkouts, target: 25, label: 'workouts' },
+    'weekly-warrior': { current: activity.weeklyWorkoutDays, target: 5, label: 'days this week' },
+    'consistency-king': { current: activity.workoutStreak, target: 7, label: 'day streak' },
+    'first-healthy-meal': { current: activity.firstHealthyMeal, target: 1, label: 'meal logged' },
+    'healthy-eating': { current: activity.healthyEatingDays, target: 5, label: 'meal days' },
+    'nutrition-explorer': { current: activity.savedMealPlans, target: 5, label: 'saved plans' },
+    'meal-planner': { current: activity.savedMealPlans, target: 1, label: 'saved chart' },
+    'first-glass': { current: activity.waterEntryDays, target: 1, label: 'day recorded' },
+    'hydration-habit': { current: activity.hydrationDays, target: 3, label: 'goal days' },
+    'hydration-champion': { current: activity.hydrationDays, target: 7, label: 'goal days' },
+    'first-step': { current: activity.firstHabit, target: 1, label: 'habit completed' },
+    'habit-builder-10': { current: activity.completedHabits, target: 10, label: 'habits completed' },
+    'consistency-matters': { current: activity.habitStreak, target: 7, label: 'day streak' },
+    'progress-tracker': { current: activity.progressEntries, target: 1, label: 'progress entry' },
+    'getting-started': { current: activity.completeProfile, target: 1, label: 'profile complete' },
+    'goal-setter': { current: activity.goalSet, target: 1, label: 'goal set' },
+    'fitlife-explorer': { current: activity.visitedSections, target: 9, label: 'sections visited' },
+  }
+}
+
 export function loadEarnedBadgeIds() {
   const saved = readLocalJson(REWARDS_STORAGE_KEY, [])
   return Array.isArray(saved) ? [...new Set(saved.filter((id) => BADGES.some((badge) => badge.id === id)))] : []
 }
 
-export function saveNewlyEarnedBadges({ workoutProgress, waterRecord, habitRecord } = {}) {
+export function loadAchievementDetails() {
+  const saved = readLocalJson(ACHIEVEMENT_DETAILS_STORAGE_KEY, [])
+  if (!Array.isArray(saved)) return []
+  const ids = new Set()
+  return saved.filter((record) => {
+    if (!record || typeof record.id !== 'string' || !BADGES.some((badge) => badge.id === record.id) || ids.has(record.id)) return false
+    ids.add(record.id)
+    return typeof record.unlockedAt === 'string' && Number.isFinite(Date.parse(record.unlockedAt))
+  })
+}
+
+export function saveNewlyEarnedBadges({
+  workoutProgress,
+  waterRecord,
+  habitRecord,
+  waterHistory,
+  habitHistory,
+  foodIntake,
+  dietCharts,
+  profile,
+  profileSaved,
+  visitedSections,
+  progressRecords,
+} = {}) {
   const existing = loadEarnedBadgeIds()
-  const earned = [...new Set([...existing, ...getEligibleBadgeIds({ workoutProgress, waterRecord, habitRecord })])]
+  const fullContextProvided = [waterHistory, habitHistory, foodIntake, dietCharts, profile, visitedSections, progressRecords, profileSaved]
+    .some((value) => value !== undefined)
+  const eligible = fullContextProvided
+    ? getAchievementContext({
+      workoutProgress,
+      waterRecord,
+      habitRecord,
+      waterHistory,
+      habitHistory,
+      foodIntake,
+      dietCharts,
+      profile,
+      profileSaved,
+      visitedSections,
+      progressRecords,
+    }).eligibleIds
+    : getEligibleBadgeIds({ workoutProgress, waterRecord, habitRecord })
+  const earned = [...new Set([...existing, ...eligible])]
+  const newlyEarned = earned.filter((id) => !existing.includes(id))
 
   if (earned.length !== existing.length) {
     if (writeLocalJson(REWARDS_STORAGE_KEY, earned)) {
+      const details = loadAchievementDetails()
+      const nextDetails = [...details, ...newlyEarned.map((id) => ({ id, unlockedAt: new Date().toISOString() }))]
+      writeLocalJson(ACHIEVEMENT_DETAILS_STORAGE_KEY, nextDetails)
       window.dispatchEvent(new Event(BADGE_UPDATE_EVENT))
     }
   }

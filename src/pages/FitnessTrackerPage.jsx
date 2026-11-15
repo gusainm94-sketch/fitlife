@@ -1,10 +1,13 @@
-import { useState } from 'react'
-import { Activity, CalendarDays, Footprints, HeartPulse, Moon, Pencil, Plus, Trash2, Watch, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Activity, CalendarDays, Check, CircleAlert, Clock3, Flame, Footprints, HeartPulse, LocateFixed, Moon, Pause, Pencil, Play, Plus, Save, Square, Trash2, Watch, X } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Link } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
+import { getProfileCalorieWeight } from '../data/calories.js'
 import { FITNESS_MEASUREMENTS, createFitnessTrackerRecord, getFitnessTrackerDailySummary, getFitnessTrackerHistory, isFitnessTrackerRecord, removeFitnessTrackerRecord } from '../data/fitnessTracker.js'
+import { RUNNING_SESSIONS_STORAGE_KEY, calculateRunningMetrics, estimateRunningCalories, formatRunningDuration, formatRunningPace, haversineDistanceKm, normalizeRunningSessions } from '../data/running.js'
 import { formatDateKey, getTodayKey } from '../utils/date.js'
+import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import './FitnessTracker.css'
 
 const EMPTY_FORM = Object.fromEntries(FITNESS_MEASUREMENTS.map(({ key }) => [key, '']))
@@ -149,6 +152,230 @@ function RecordForm({ records, selectedDate, onSave, onDelete, saveError }) {
   )
 }
 
+function RunningMetric({ label, value, unit, icon: Icon }) {
+  return <article className="running-metric"><span className="running-metric-icon"><Icon size={16} /></span><span>{label}</span><strong>{value} <small>{unit}</small></strong></article>
+}
+
+function getElapsedSeconds(session, timestamp = Date.now()) {
+  if (!session) return 0
+  const end = session.pausedAt ?? timestamp
+  return Math.max(0, Math.round((end - session.startedAt - session.pausedDurationMs) / 1000))
+}
+
+function RunningTracker({ profile }) {
+  const [sessions, setSessions] = useState(() => normalizeRunningSessions(readLocalJson(RUNNING_SESSIONS_STORAGE_KEY, [])))
+  const [session, setSession] = useState(null)
+  const [now, setNow] = useState(0)
+  const [gpsStatus, setGpsStatus] = useState('idle')
+  const [gpsMessage, setGpsMessage] = useState('GPS starts only after you choose Start GPS run.')
+  const [finishPending, setFinishPending] = useState(false)
+  const [summary, setSummary] = useState(null)
+  const [manualForm, setManualForm] = useState({ distanceKm: '', minutes: '', seconds: '' })
+  const [manualMessage, setManualMessage] = useState('')
+  const watchRef = useRef(null)
+  const weightKg = getProfileCalorieWeight(profile)
+  const sessionStatus = session?.status
+
+  const stopGpsWatch = () => {
+    if (watchRef.current !== null && globalThis.navigator?.geolocation) globalThis.navigator.geolocation.clearWatch(watchRef.current)
+    watchRef.current = null
+  }
+
+  const onPosition = (position) => {
+    if (!position?.coords) return
+    const { latitude, longitude, accuracy } = position.coords
+    if (![latitude, longitude, accuracy].every(Number.isFinite) || accuracy > 100) {
+      setGpsStatus('inaccurate')
+      setGpsMessage('GPS signal is too inaccurate right now. Keep the app in the foreground and move to a clearer area.')
+      return
+    }
+    setSession((current) => {
+      if (!current || current.status !== 'running' || current.trackingMethod !== 'gps') return current
+      const point = { latitude, longitude, timestamp: position.timestamp || Date.now() }
+      const segment = current.lastPoint ? haversineDistanceKm(current.lastPoint, point) : 0
+      if (current.lastPoint && (!Number.isFinite(segment) || segment < 0.003 || segment > 1)) return current
+      setGpsStatus('active')
+      setGpsMessage(`GPS active · accuracy ±${Math.round(accuracy)} m`)
+      return {
+        ...current,
+        distanceKm: current.distanceKm + (segment || 0),
+        lastPoint: point,
+        acceptedPoints: current.acceptedPoints + 1,
+      }
+    })
+  }
+
+  const onPositionError = (error) => {
+    if (error?.code === 1) {
+      setGpsStatus('denied')
+      setGpsMessage('Location permission was denied. You can finish with the GPS distance collected so far or use manual tracking below.')
+    } else {
+      setGpsStatus('signal-lost')
+      setGpsMessage('GPS signal is temporarily unavailable. The timer can continue, but distance will update only when valid points return.')
+    }
+  }
+
+  const startGpsWatch = () => {
+    if (!globalThis.navigator?.geolocation) {
+      setGpsStatus('unavailable')
+      setGpsMessage('This browser does not provide Geolocation. Use manual tracking below.')
+      return false
+    }
+    stopGpsWatch()
+    watchRef.current = globalThis.navigator.geolocation.watchPosition(onPosition, onPositionError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 })
+    return true
+  }
+
+  useEffect(() => {
+    if (sessionStatus !== 'running') return undefined
+    const timer = window.setInterval(() => setNow(Date.now()), 500)
+    return () => window.clearInterval(timer)
+  }, [sessionStatus])
+
+  useEffect(() => () => {
+    if (watchRef.current !== null && globalThis.navigator?.geolocation) globalThis.navigator.geolocation.clearWatch(watchRef.current)
+    watchRef.current = null
+  }, [])
+
+  const appendSession = (nextSession) => {
+    const next = normalizeRunningSessions([...sessions, nextSession])
+    if (next.length !== sessions.length + 1 || !writeLocalJson(RUNNING_SESSIONS_STORAGE_KEY, next)) return false
+    setSessions(next)
+    return true
+  }
+
+  const startGpsSession = () => {
+    if (session) return
+    const startedAt = Date.now()
+    setSession({ id: `run:${globalThis.crypto.randomUUID()}`, startedAt, status: 'running', trackingMethod: 'gps', pausedAt: null, pausedDurationMs: 0, distanceKm: 0, acceptedPoints: 0, lastPoint: null })
+    setSummary(null)
+    setGpsStatus('requesting')
+    setGpsMessage('Requesting location permission. FitLife uses location only during this active run.')
+    startGpsWatch()
+  }
+
+  const pauseSession = () => {
+    if (!session || session.status !== 'running') return
+    stopGpsWatch()
+    setSession((current) => current ? { ...current, status: 'paused', pausedAt: Date.now() } : current)
+    setGpsStatus('paused')
+    setGpsMessage('Run paused. GPS collection is stopped until you resume.')
+  }
+
+  const resumeSession = () => {
+    if (!session || session.status !== 'paused') return
+    const resumedAt = Date.now()
+    setSession((current) => current ? { ...current, status: 'running', pausedAt: null, pausedDurationMs: current.pausedDurationMs + (resumedAt - current.pausedAt) } : current)
+    setGpsStatus('requesting')
+    setGpsMessage('GPS is active again while the run is in the foreground.')
+    startGpsWatch()
+  }
+
+  const finishSession = () => {
+    if (!session) return
+    stopGpsWatch()
+    const finishedAt = Date.now()
+    const durationSeconds = getElapsedSeconds(session, finishedAt)
+    const caloriesKcal = estimateRunningCalories(durationSeconds, weightKg)
+    setSummary({
+      id: session.id,
+      startedAt: new Date(session.startedAt).toISOString(),
+      finishedAt: new Date(finishedAt).toISOString(),
+      distanceKm: Number(session.distanceKm.toFixed(3)),
+      durationSeconds,
+      caloriesKcal,
+      trackingMethod: session.trackingMethod,
+      acceptedPoints: session.acceptedPoints,
+    })
+    setSession(null)
+    setFinishPending(false)
+    setGpsStatus('idle')
+    setGpsMessage('GPS stopped. No location is collected outside an active run.')
+  }
+
+  const saveSummary = () => {
+    if (!summary) return
+    if (!appendSession(summary)) {
+      setManualMessage('Unable to save this run. Check browser storage and try again.')
+      return
+    }
+    setSummary(null)
+    setManualMessage('Run saved to your account history.')
+  }
+
+  const saveManualRun = (event) => {
+    event.preventDefault()
+    const distanceKm = Number(manualForm.distanceKm)
+    const durationSeconds = Number(manualForm.minutes || 0) * 60 + Number(manualForm.seconds || 0)
+    if (!Number.isFinite(distanceKm) || distanceKm <= 0 || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      setManualMessage('Enter a distance and a duration greater than zero.')
+      return
+    }
+    const finishedAt = new Date()
+    const startedAt = new Date(finishedAt.getTime() - durationSeconds * 1000)
+    const manualSession = {
+      id: `run:${globalThis.crypto.randomUUID()}`,
+      startedAt: startedAt.toISOString(),
+      finishedAt: finishedAt.toISOString(),
+      distanceKm: Number(distanceKm.toFixed(3)),
+      durationSeconds,
+      caloriesKcal: estimateRunningCalories(durationSeconds, weightKg),
+      trackingMethod: 'manual',
+      acceptedPoints: null,
+    }
+    if (!appendSession(manualSession)) {
+      setManualMessage('Unable to save this run. Check browser storage and try again.')
+      return
+    }
+    setManualForm({ distanceKm: '', minutes: '', seconds: '' })
+    setManualMessage('Manual run saved. It is clearly marked separately from GPS sessions.')
+  }
+
+  const elapsedSeconds = getElapsedSeconds(session, now)
+  const totals = sessions.reduce((total, item) => ({
+    distanceKm: total.distanceKm + item.distanceKm,
+    durationSeconds: total.durationSeconds + item.durationSeconds,
+    caloriesKcal: total.caloriesKcal + (item.caloriesKcal ?? 0),
+  }), { distanceKm: 0, durationSeconds: 0, caloriesKcal: 0 })
+  const metrics = calculateRunningMetrics(totals.distanceKm, totals.durationSeconds)
+  const liveMetrics = calculateRunningMetrics(session?.distanceKm ?? 0, elapsedSeconds)
+
+  return (
+    <section className="running-tracker" aria-labelledby="running-tracker-title">
+      <div className="running-heading"><div><p className="eyebrow">New · foreground tracking</p><h2 id="running-tracker-title">Running tracker</h2><p>Track a run with browser GPS or record it manually when location is unavailable.</p></div><span className={`running-status ${gpsStatus}`}><LocateFixed size={14} /> {gpsStatus === 'active' ? 'GPS active' : gpsStatus === 'paused' ? 'Paused' : gpsStatus === 'denied' ? 'GPS denied' : gpsStatus === 'unavailable' ? 'GPS unavailable' : 'Ready'}</span></div>
+      <div className="running-overview-grid" aria-label="Running totals">
+        <RunningMetric label="Distance" value={totals.distanceKm.toFixed(2)} unit="km" icon={Footprints} />
+        <RunningMetric label="Duration" value={formatRunningDuration(totals.durationSeconds)} unit="total" icon={Clock3} />
+        <RunningMetric label="Average pace" value={formatRunningPace(metrics.paceSecondsPerKm).replace(' / km', '')} unit="/ km" icon={Activity} />
+        <RunningMetric label="Average speed" value={metrics.averageSpeedKmh ? metrics.averageSpeedKmh.toFixed(1) : '—'} unit="km/h" icon={Activity} />
+        <RunningMetric label="Estimated calories" value={totals.caloriesKcal ? totals.caloriesKcal.toLocaleString() : '—'} unit="kcal" icon={Flame} />
+      </div>
+      <div className="running-session-panel">
+        <div className="running-live-card">
+          <div className="running-live-label"><span>Current session</span><strong>{session ? (session.status === 'paused' ? 'Paused' : 'In progress') : summary ? 'Ready to save' : 'Not started'}</strong></div>
+          <div className="running-live-time">{formatRunningDuration(session ? elapsedSeconds : summary?.durationSeconds ?? 0)}</div>
+          <div className="running-live-stats"><span>{(session?.distanceKm ?? summary?.distanceKm ?? 0).toFixed(2)} km</span><span>{formatRunningPace(session ? liveMetrics.paceSecondsPerKm : summary ? calculateRunningMetrics(summary.distanceKm, summary.durationSeconds).paceSecondsPerKm : null)}</span></div>
+          {!session && !summary && <div className="running-start-actions"><button className="running-primary-button" type="button" onClick={startGpsSession}><LocateFixed size={16} /> Start GPS run</button></div>}
+          {session && <div className="running-control-row">{session.status === 'running' ? <button className="running-secondary-button" type="button" onClick={pauseSession}><Pause size={16} /> Pause</button> : <button className="running-primary-button" type="button" onClick={resumeSession}><Play size={16} /> Resume</button>}<button className="running-finish-button" type="button" onClick={() => setFinishPending(true)}><Square size={15} /> Finish run</button></div>}
+          {finishPending && <div className="running-confirm" role="alert"><strong>Finish this run?</strong><span>Your current GPS distance and active duration will be shown for review before saving.</span><div><button className="running-secondary-button" type="button" onClick={() => setFinishPending(false)}>Keep running</button><button className="running-finish-button" type="button" onClick={finishSession}><Check size={15} /> Finish</button></div></div>}
+          {summary && <div className="running-summary" role="status"><strong>Session summary</strong><span>{summary.trackingMethod === 'gps' ? 'GPS tracked' : 'Manually recorded'} · {summary.distanceKm.toFixed(2)} km · {formatRunningDuration(summary.durationSeconds)} · {summary.caloriesKcal === null ? 'kcal estimate unavailable' : `~${summary.caloriesKcal} kcal estimate`}</span><div><button className="running-secondary-button" type="button" onClick={() => setSummary(null)}>Discard summary</button><button className="running-primary-button" type="button" onClick={saveSummary}><Save size={15} /> Save run</button></div></div>}
+        </div>
+        <div className="running-gps-note"><div className="running-note-heading"><LocateFixed size={15} /><strong>GPS status</strong></div><p>{gpsMessage}</p><p className="running-limitations">Browser GPS generally requires HTTPS or localhost. Tracking may pause or become unreliable when the browser is backgrounded, the phone is locked, or the operating system suspends the page. FitLife does not provide native background tracking.</p></div>
+      </div>
+      <form className="running-manual-form" onSubmit={saveManualRun}>
+        <div><div className="running-note-heading"><Pencil size={15} /><strong>Manual run</strong></div><p>Use this when GPS is unavailable or denied. The saved record will be labelled manually recorded.</p></div>
+        <label>Distance (km)<input type="number" min="0.01" max="500" step="0.01" value={manualForm.distanceKm} onChange={(event) => setManualForm((current) => ({ ...current, distanceKm: event.target.value }))} required /></label>
+        <label>Minutes<input type="number" min="0" max="1440" step="1" value={manualForm.minutes} onChange={(event) => setManualForm((current) => ({ ...current, minutes: event.target.value }))} required /></label>
+        <label>Seconds<input type="number" min="0" max="59" step="1" value={manualForm.seconds} onChange={(event) => setManualForm((current) => ({ ...current, seconds: event.target.value }))} required /></label>
+        <button className="running-secondary-button" type="submit"><Save size={15} /> Save manual run</button>
+        {manualMessage && <p className="running-form-message" role="status">{manualMessage}</p>}
+      </form>
+      <section className="running-history" aria-labelledby="running-history-title"><div className="running-history-heading"><div><h3 id="running-history-title">Running history</h3><p>Completed sessions stay saved to this signed-in account.</p></div><span>{sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}</span></div>{sessions.length ? <div className="running-history-list">{[...sessions].reverse().map((item) => <article className="running-history-row" key={item.id}><div><strong>{new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.finishedAt))}</strong><p>{item.trackingMethod === 'gps' ? 'GPS tracked' : 'Manually recorded'}{item.trackingMethod === 'gps' && item.acceptedPoints !== null ? ` · ${item.acceptedPoints} accepted points` : ''}</p></div><span><b>{item.distanceKm.toFixed(2)} km</b>{formatRunningDuration(item.durationSeconds)} · {formatRunningPace(calculateRunningMetrics(item.distanceKm, item.durationSeconds).paceSecondsPerKm)} · {item.caloriesKcal === null ? 'kcal estimate unavailable' : `~${item.caloriesKcal} kcal estimate`}</span></article>)}</div> : <p className="running-empty">No completed runs yet. Start GPS or save a manual run to build your history.</p>}</section>
+      {weightKg === null && <p className="running-calorie-note"><CircleAlert size={14} /> Calorie values are shown only when a confirmed profile weight is available; otherwise the session remains valid and the estimate is unavailable.</p>}
+    </section>
+  )
+}
+
 export default function FitnessTrackerPage() {
   const { profile, fitnessTrackerRecords, saveFitnessTrackerRecords, fitnessTrackerStorageError } = useAppData()
   const [selectedDate, setSelectedDate] = useState(getTodayKey)
@@ -171,6 +398,8 @@ export default function FitnessTrackerPage() {
         <span className="date-pill"><Watch size={14} /> {profile.smartwatchAvailability || 'Device not selected'}</span>
       </header>
       <p className="fitness-manual-note">Manual entries only. FitLife does not connect to or automatically sync with Apple Watch, Fitbit, Garmin, Wear OS, or other devices. <Link to="/calories">Calories are also included in your calorie history.</Link></p>
+
+      <RunningTracker profile={profile} />
 
       <section className="panel fitness-date-panel" aria-label="View a date">
         <label><CalendarDays size={15} /> View date <input type="date" max={getTodayKey()} value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} /></label>

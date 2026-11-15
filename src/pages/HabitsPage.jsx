@@ -103,7 +103,7 @@ function HabitTracker() {
 
 export default function HabitsPage() {
   return (
-    <section className="page-content">
+    <section className="page-content habits-page">
       <div className="tracker-page-heading">
         <div><p className="eyebrow">{formatToday({ year: 'numeric' })}</p><h1>Your daily rhythm</h1><p className="workout-page-subtitle">Track hydration and the everyday habits that help you feel your best.</p></div>
         <span className="date-pill"><Sparkles size={14} /> Progress at your pace</span>
