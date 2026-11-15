@@ -161,8 +161,8 @@ export default function DashboardPage() {
         <div><p className="eyebrow">Your membership</p><h2>{membership.plan} plan</h2><p>{membership.membershipExpiryDate ? `${isMembershipExpired(membership) ? 'Expired' : 'Access until'} ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${membership.membershipExpiryDate}T00:00:00`))}` : 'Basic access with no expiry'}</p></div>
         <Link className="text-action" to="/membership">{membership.plan === 'Free' ? 'Upgrade to Premium' : 'Manage membership'} <ArrowRight size={13} /></Link>
       </section>
-      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} fitness={fitnessToday} plannedMealCount={plannedMealCount} /></div>
       <div className="lower-grid"><WorkoutPanel /><HydrationPanel /></div>
+      <div className="dashboard-grid"><ActivityPanel records={progressRecords} weekly={weekly} monthly={monthly} /><TodayPanel today={today} fitness={fitnessToday} plannedMealCount={plannedMealCount} /></div>
       <p className="eyebrow" style={{ marginTop: 16, color: '#929b94', letterSpacing: '.2px', textTransform: 'none' }}>Activity calories are estimates; fitness tracker calorie entries are manually entered. FitLife does not measure readings automatically.</p>
     </div>
   )

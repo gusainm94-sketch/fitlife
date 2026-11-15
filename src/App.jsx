@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react'
+import { Component, lazy, Suspense } from 'react'
+import { Activity, CircleAlert, RefreshCw } from 'lucide-react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppProvider } from './context/AppContext.jsx'
 import { useAuth } from './hooks/useAuth.js'
@@ -31,31 +32,62 @@ function RequireAuth() {
   )
 }
 
+class RouteErrorBoundary extends Component {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error, info) {
+    console.error('FitLife route failed to render.', error, info)
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children
+    return (
+      <main className="route-error" role="alert">
+        <span className="route-error-icon"><CircleAlert size={22} /></span>
+        <p className="eyebrow">Something needs another try</p>
+        <h1>This FitLife screen could not load.</h1>
+        <p>Nothing was changed in your saved data. Reload the screen or return to your dashboard.</p>
+        <div className="route-error-actions"><button className="primary-button" type="button" onClick={() => window.location.reload()}><RefreshCw size={15} /> Reload screen</button><a className="secondary-button" href="/">Back to dashboard</a></div>
+      </main>
+    )
+  }
+}
+
+function RouteLoading() {
+  return <main className="route-loading" role="status" aria-live="polite"><span className="route-loading-mark"><Activity size={21} /></span><span>Loading FitLife…</span></main>
+}
+
 export default function App() {
   const { user } = useAuth()
   return (
-    <Suspense fallback={<div className="route-loading" role="status">Loading FitLife...</div>}>
-      <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage mode="login" />} />
-        <Route path="/signup" element={user ? <Navigate to="/" replace /> : <AuthPage mode="signup" />} />
-        <Route element={<RequireAuth />}>
-          <Route element={<AppLayout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="/workouts" element={<WorkoutPlannerPage />} />
-            <Route path="/nutrition" element={<DietPlannerPage />} />
-            <Route path="/nutrition-calculator" element={<NutritionCalculatorPage />} />
-            <Route path="/bmi-profile" element={<BmiProfilePage />} />
-            <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/calories" element={<CaloriesTrackerPage />} />
-            <Route path="/fitness-tracker" element={<FitnessTrackerPage />} />
-            <Route path="/music" element={<MusicPage />} />
-            <Route path="/habits" element={<HabitsPage />} />
-            <Route path="/rewards" element={<RewardsPage />} />
-            <Route path="/membership" element={<MembershipPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+    <RouteErrorBoundary>
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/login" element={user ? <Navigate to="/" replace /> : <AuthPage mode="login" />} />
+          <Route path="/signup" element={user ? <Navigate to="/" replace /> : <AuthPage mode="signup" />} />
+          <Route element={<RequireAuth />}>
+            <Route element={<AppLayout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="/workouts" element={<WorkoutPlannerPage />} />
+              <Route path="/nutrition" element={<DietPlannerPage />} />
+              <Route path="/nutrition-calculator" element={<NutritionCalculatorPage />} />
+              <Route path="/bmi-profile" element={<BmiProfilePage />} />
+              <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/calories" element={<CaloriesTrackerPage />} />
+              <Route path="/fitness-tracker" element={<FitnessTrackerPage />} />
+              <Route path="/music" element={<MusicPage />} />
+              <Route path="/habits" element={<HabitsPage />} />
+              <Route path="/rewards" element={<RewardsPage />} />
+              <Route path="/membership" element={<MembershipPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </RouteErrorBoundary>
   )
 }
