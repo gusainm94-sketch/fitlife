@@ -5,11 +5,12 @@ import { AppProvider } from './context/AppContext.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import AppLayout from './layouts/AppLayout.jsx'
 import { MembershipProvider } from './context/MembershipContext.jsx'
+import ProfileSetup from './components/ProfileSetup.jsx'
+import { useAppData } from './hooks/useAppData.js'
 import './App.css'
 
 const AuthPage = lazy(() => import('./pages/AuthPage.jsx'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'))
-const DietPlannerPage = lazy(() => import('./pages/DietPlannerPage.jsx'))
 const BmiProfilePage = lazy(() => import('./pages/BmiProfilePage.jsx'))
 const WorkoutPlannerPage = lazy(() => import('./pages/WorkoutPlannerPage.jsx'))
 const HabitsPage = lazy(() => import('./pages/HabitsPage.jsx'))
@@ -27,9 +28,16 @@ function RequireAuth() {
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />
   return (
     <AppProvider key={user.id} user={user}>
-      <MembershipProvider userId={user.id}><Outlet /></MembershipProvider>
+      <MembershipProvider userId={user.id}><ProfileSetupGate /></MembershipProvider>
     </AppProvider>
   )
+}
+
+function ProfileSetupGate() {
+  const { profile } = useAppData()
+  return profile.profileSetupComplete
+    ? <Outlet />
+    : <ProfileSetup />
 }
 
 class RouteErrorBoundary extends Component {
@@ -73,7 +81,7 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route index element={<DashboardPage />} />
               <Route path="/workouts" element={<WorkoutPlannerPage />} />
-              <Route path="/nutrition" element={<DietPlannerPage />} />
+              <Route path="/nutrition" element={<Navigate to="/nutrition-calculator" replace />} />
               <Route path="/nutrition-calculator" element={<NutritionCalculatorPage />} />
               <Route path="/bmi-profile" element={<BmiProfilePage />} />
               <Route path="/progress" element={<ProgressPage />} />

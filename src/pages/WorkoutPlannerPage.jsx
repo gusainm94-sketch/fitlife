@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, CheckCircle2, Dumbbell, ExternalLink, House, Play, RotateCcw, Search, Sparkles, Target, Timer, TriangleAlert } from 'lucide-react'
+import { Check, CheckCircle2, Dumbbell, ExternalLink, House, Play, RotateCcw, Search, Sparkles, Target, Timer, TriangleAlert, Replace } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
-import { DEFAULT_PROFILE } from '../data/profile.js'
 import { GYM_DIFFICULTIES, GYM_WORKOUTS, WEEKDAYS, WEEKLY_WORKOUTS } from '../data/workouts.js'
-import { EQUIPMENT_OPTIONS, NO_EQUIPMENT, filterWorkoutPlan, toggleEquipmentSelection } from '../data/equipment.js'
+import { EQUIPMENT_OPTIONS, NO_EQUIPMENT, filterWorkoutPlan, getExerciseAlternatives, toggleEquipmentSelection } from '../data/equipment.js'
 import { getExerciseSafetyWarnings, getPotentialExerciseAlternatives } from '../data/exerciseSafety.js'
 import { EXERCISE_VIDEO_LIBRARY, getExerciseVideoUrl } from '../data/exerciseVideos.js'
 
@@ -48,7 +47,7 @@ function WeekDayButton({ day, date, plan, hasScheduledWorkout, dayProgress, sele
   )
 }
 
-function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, safetyAlternatives }) {
+function ExerciseCard({ exercise, originalExercise, completed, onToggle, onReplace, index, safetyWarnings, safetyAlternatives }) {
   const repText = !exercise.reps
     ? ''
     : /reps?|seconds?|minutes?|metres?|\/(?:side|leg)|hold/i.test(exercise.reps)
@@ -62,8 +61,9 @@ function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, sa
       <span className="exercise-number">{String(index + 1).padStart(2, '0')}</span>
       <div className="exercise-details">
         <h3>{exercise.name}</h3>
+        {exercise.isAlternative && <p className="exercise-alternative-note">Alternative exercise — {originalExercise.name} requires equipment you don’t have.</p>}
         {exercise.description && <p>{exercise.description}</p>}
-        <a className="exercise-video-link" href={getExerciseVideoUrl(exercise.name)} target="_blank" rel="noopener noreferrer">
+        <a className="exercise-video-link" href={exercise.videoUrl ?? getExerciseVideoUrl(exercise.name)} target="_blank" rel="noopener noreferrer" data-exercise-name={exercise.name}>
           <Play size={13} /> Watch demonstration <ExternalLink size={12} />
         </a>
         {safetyWarnings.length > 0 && <aside className="exercise-safety-warning" aria-label={`Caution for ${exercise.name}`}>
@@ -78,8 +78,9 @@ function ExerciseCard({ exercise, completed, onToggle, index, safetyWarnings, sa
           {exercise.duration && <span><Timer size={13} /> {exercise.duration}</span>}
         </div>
       </div>
+      {onReplace && <button className="exercise-replace-button" type="button" onClick={onReplace}><Replace size={14} /> Replace Exercise</button>}
       <button className="exercise-check" type="button" aria-pressed={completed} aria-label={`${completed ? 'Mark incomplete' : 'Mark complete'}: ${exercise.name}`} onClick={onToggle}>
-        {completed ? <Check size={17} strokeWidth={2.5} /> : <span />}
+        {completed ? <><Check size={15} strokeWidth={2.5} /> <span>Completed</span></> : <span>Mark as Done</span>}
       </button>
     </article>
   )
@@ -148,7 +149,7 @@ function WorkoutProgress({ completed, total, hasScheduledWorkout }) {
 
   return (
     <div className="workout-progress-block">
-      <div className="workout-progress-label"><span><Target size={14} /> Daily progress</span><strong>{total ? `${completed} of ${total} exercises` : hasScheduledWorkout ? 'No matching exercises' : 'Rest day'} <b>{percent}%</b></strong></div>
+      <div className="workout-progress-label"><span><Target size={14} /> Workout Progress</span><strong>{total && completed === total ? 'Workout Completed!' : total ? `${completed} / ${total} exercises completed` : hasScheduledWorkout ? 'No matching exercises' : 'Rest day'} <b>{percent}%</b></strong></div>
       <div className="workout-progress-track" role="progressbar" aria-label="Daily workout completion" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div>
     </div>
   )
@@ -164,7 +165,7 @@ function EquipmentSelector({ mode, selected, onToggle, saveError }) {
         <span className="workout-equipment-summary-action">{selected.includes(NO_EQUIPMENT) ? 'No Equipment' : 'Update selection'}</span>
       </summary>
       <div className="workout-equipment-content">
-        <div className="workout-equipment-heading"><div><h2>{mode === 'gym' ? 'Gym equipment' : 'Home equipment'}</h2><p>Exercises that need equipment you do not select will be hidden. You can change this anytime.</p></div></div>
+        <div className="workout-equipment-heading"><div><h2>{mode === 'gym' ? 'Gym equipment' : 'Home equipment'}</h2><p>Unavailable equipment is automatically swapped for a suitable movement. You can change this anytime.</p></div></div>
         <div className="workout-equipment-grid" role="group" aria-label={`Select ${mode} equipment`}>
           {EQUIPMENT_OPTIONS[mode].map(({ id, label }) => {
             const isSelected = selected.includes(id)
@@ -185,11 +186,12 @@ function EquipmentSelector({ mode, selected, onToggle, saveError }) {
 export default function WorkoutPlannerPage() {
   const [mode, setMode] = useState('gym')
   const [selectedDayIndex, setSelectedDayIndex] = useState(getTodayIndex)
-  const { profile, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise } = useAppData()
+  const { profile, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, workoutReplacements, toggleWorkoutExercise, saveWorkoutReplacement } = useAppData()
   const injuryAreas = Array.isArray(profile.injuryAreas) ? profile.injuryAreas : []
   const injuryDescription = typeof profile.injuryDescription === 'string' ? profile.injuryDescription : ''
   const safetyAreas = injuryAreas.length ? injuryAreas : injuryDescription.trim() ? ['Other'] : []
-  const [difficulty, setDifficulty] = useState(profile.fitnessLevel || DEFAULT_PROFILE.fitnessLevel)
+  const [difficulty, setDifficulty] = useState(profile.fitnessLevel || GYM_DIFFICULTIES[0])
+  const [replacementOpen, setReplacementOpen] = useState('')
   useEffect(() => {
     const refreshSelectedDay = () => setSelectedDayIndex(getTodayIndex())
     document.addEventListener('visibilitychange', refreshSelectedDay)
@@ -210,9 +212,26 @@ export default function WorkoutPlannerPage() {
   const safetyCatalog = mode === 'gym'
     ? Object.values(GYM_WORKOUTS).flatMap((plansForLevel) => plansForLevel.flatMap(({ exercises }) => exercises))
     : WEEKLY_WORKOUTS.home.flatMap(({ exercises }) => exercises)
-  const plans = dayPlans.map(({ plan: filteredPlan }) => filteredPlan)
-  const plan = plans[selectedDayIndex]
-  const alternatives = dayPlans[selectedDayIndex].alternatives
+  const displayPlans = originalPlans.map((originalPlan, dayIndex) => {
+    const filtered = dayPlans[dayIndex]
+    const exercises = originalPlan.exercises.flatMap((originalExercise) => {
+      const key = `${mode}:${difficulty}:${weekId}:${WEEKDAYS[dayIndex].id}:${originalExercise.id}`
+      const selectedName = workoutReplacements[key]
+      const replacementOption = getExerciseAlternatives(mode, originalExercise, selectedEquipment).find(({ name }) => name === selectedName)
+      const available = filtered.plan.exercises.find(({ id }) => id === originalExercise.id)
+      if (replacementOption) {
+        return [{ ...originalExercise, name: replacementOption.name, videoUrl: getExerciseVideoUrl(replacementOption.name), isAlternative: true, originalName: originalExercise.name }]
+      }
+      if (available) return [{ ...available, videoUrl: getExerciseVideoUrl(available.name) }]
+      const option = filtered.alternatives.find(({ exercise, name }) => exercise.id === originalExercise.id && (!selectedName || name === selectedName))
+        ?? filtered.alternatives.find(({ exercise }) => exercise.id === originalExercise.id)
+      if (!option) return []
+      return [{ ...originalExercise, name: option.name, videoUrl: getExerciseVideoUrl(option.name), isAlternative: true, originalName: originalExercise.name }]
+    })
+    return { ...filtered.plan, exercises, dayAlternatives: filtered.alternatives }
+  })
+  const plan = displayPlans[selectedDayIndex]
+  const alternatives = plan.dayAlternatives
   const hasScheduledWorkout = originalPlans[selectedDayIndex].exercises.length > 0
   const dayProgress = mode === 'gym'
     ? workoutProgress.gym?.[difficulty]?.[weekId]?.[selectedDay.id] ?? {}
@@ -250,7 +269,7 @@ export default function WorkoutPlannerPage() {
       <section className="panel workout-week-panel" aria-labelledby="week-heading">
         <div className="workout-section-heading"><div><h2 id="week-heading">Your week</h2><p>Monday to Sunday · choose a day to see the plan</p></div><span className="workout-week-badge"><Sparkles size={13} /> {mode === 'gym' ? `${difficulty} gym plan` : 'Home plan'}</span></div>
         <div className="workout-week-grid">
-          {WEEKDAYS.map((day, index) => <WeekDayButton key={day.id} day={day} date={weekDates[index]} plan={plans[index]} hasScheduledWorkout={originalPlans[index].exercises.length > 0} dayProgress={mode === 'gym' ? workoutProgress.gym?.[difficulty]?.[weekId]?.[day.id] : workoutProgress.home?.[weekId]?.[day.id]} selected={selectedDayIndex === index} onSelect={() => setSelectedDayIndex(index)} />)}
+          {WEEKDAYS.map((day, index) => <WeekDayButton key={day.id} day={day} date={weekDates[index]} plan={displayPlans[index]} hasScheduledWorkout={originalPlans[index].exercises.length > 0} dayProgress={mode === 'gym' ? workoutProgress.gym?.[difficulty]?.[weekId]?.[day.id] : workoutProgress.home?.[weekId]?.[day.id]} selected={selectedDayIndex === index} onSelect={() => setSelectedDayIndex(index)} />)}
         </div>
       </section>
 
@@ -266,11 +285,17 @@ export default function WorkoutPlannerPage() {
         {plan.exercises.length > 0 ? (
           <div className="exercise-list" aria-label={`${plan.title} exercises`}>
             {plan.exercises.map((item, index) => {
+              const originalItem = originalPlans[selectedDayIndex].exercises.find(({ id }) => id === item.id) ?? item
+              const replacementKey = `${mode}:${difficulty}:${weekId}:${selectedDay.id}:${originalItem.id}`
+              const replacementOptions = getExerciseAlternatives(mode, originalItem, selectedEquipment)
               const safetyWarnings = getExerciseSafetyWarnings(item, safetyAreas)
               const safetyAlternatives = safetyWarnings.length
                 ? getPotentialExerciseAlternatives(mode, item, safetyAreas, selectedEquipment, safetyCatalog)
                 : []
-              return <ExerciseCard key={item.id} exercise={item} index={index} completed={Boolean(dayProgress[item.id])} onToggle={() => toggleWorkoutExercise(mode, weekId, selectedDay.id, item.id, difficulty)} safetyWarnings={safetyWarnings} safetyAlternatives={safetyAlternatives} />
+              return <div className="exercise-card-wrap" key={item.id}>
+                <ExerciseCard exercise={item} originalExercise={originalItem} index={index} completed={Boolean(dayProgress[originalItem.id])} onToggle={() => toggleWorkoutExercise(mode, weekId, selectedDay.id, originalItem.id, difficulty, { ...item, category })} onReplace={replacementOptions.length ? () => setReplacementOpen(replacementOpen === replacementKey ? '' : replacementKey) : null} safetyWarnings={safetyWarnings} safetyAlternatives={safetyAlternatives} />
+                {replacementOpen === replacementKey && <div className="exercise-replacement-picker" role="dialog" aria-label={`Replace ${originalItem.name}`}><strong>Choose a suitable alternative</strong>{replacementOptions.map(({ name }) => <button key={name} type="button" className={item.name === name ? 'selected' : ''} onClick={() => { saveWorkoutReplacement(replacementKey, name); setReplacementOpen('') }}>{name}</button>)}<button type="button" className="exercise-replacement-cancel" onClick={() => setReplacementOpen('')}>Cancel</button></div>}
+              </div>
             })}
           </div>
         ) : (

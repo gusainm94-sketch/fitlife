@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import {
   AVATAR_OPTIONS,
+  AVAILABLE_EQUIPMENT,
   DIET_PREFERENCES,
   FITNESS_GOALS,
   FITNESS_LEVELS,
@@ -23,6 +24,7 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
     gender: profile.gender,
     goal: profile.goal,
     fitnessLevel: profile.fitnessLevel,
+    availableEquipment: Array.isArray(profile.availableEquipment) ? profile.availableEquipment : [],
     dietPreference: profile.dietPreference,
     smokingStatus: profile.smokingStatus,
     smartwatchAvailability: profile.smartwatchAvailability,
@@ -72,6 +74,7 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
       gender: form.gender,
       goal: form.goal,
       fitnessLevel: form.fitnessLevel,
+      availableEquipment: form.availableEquipment,
       dietPreference: form.dietPreference,
       smokingStatus: form.smokingStatus,
       smartwatchAvailability: form.smartwatchAvailability,
@@ -88,6 +91,15 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
         ? current.injuryAreas.filter((selectedArea) => selectedArea !== area)
         : [...current.injuryAreas, area],
     }))
+  }
+
+  const toggleEquipment = (id) => {
+    setForm((current) => {
+      if (id === 'no-equipment') return { ...current, availableEquipment: [] }
+      const next = current.availableEquipment.filter((item) => item !== 'no-equipment')
+      const selected = next.includes(id) ? next.filter((item) => item !== id) : [...next, id]
+      return { ...current, availableEquipment: selected }
+    })
   }
 
   return (
@@ -152,6 +164,12 @@ export default function ProfileEditor({ profile, onSave, onClose, saveError = fa
               {FITNESS_LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
             </select>
           </label>
+          <fieldset className="profile-injury-field profile-field-wide">
+            <legend>Available equipment <span className="profile-optional-label">Optional</span></legend>
+            <div className="profile-injury-options" role="group" aria-label="Select available equipment">
+              {AVAILABLE_EQUIPMENT.map(({ id, label }) => <button key={id} className={`profile-injury-option${(id === 'no-equipment' ? form.availableEquipment.length === 0 : form.availableEquipment.includes(id)) ? ' selected' : ''}`} type="button" aria-pressed={id === 'no-equipment' ? form.availableEquipment.length === 0 : form.availableEquipment.includes(id)} onClick={() => toggleEquipment(id)}>{label}</button>)}
+            </div>
+          </fieldset>
           <label className="profile-field"><span className="profile-label-row">Diet preference <span className="profile-optional-label">Optional</span></span>
             <select name="dietPreference" value={form.dietPreference} onChange={updateField}>
               <option value="">Not specified</option>

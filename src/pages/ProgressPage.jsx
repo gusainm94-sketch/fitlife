@@ -45,7 +45,7 @@ function WeeklyActivityChart({ activityByDay }) {
 
 function WeightVisualization({ weight, isSampleProfile }) {
   const hasWeight = Number.isFinite(weight)
-  const marker = hasWeight ? Math.max(10, Math.min(90, 50 + (weight - 70) * 3)) : null
+  const marker = hasWeight ? Math.max(10, Math.min(90, ((weight - 30) / 320) * 100)) : null
   return (
     <section className="panel progress-panel weight-progress-panel" aria-labelledby="weight-progress-title">
       <div className="progress-panel-heading"><div><h2 id="weight-progress-title">Weight snapshot</h2><p>{hasWeight ? isSampleProfile ? 'Sample profile measurement' : 'Current measurement from your saved profile' : 'No weight measurement provided'}</p></div><span className="progress-panel-icon"><Weight size={17} /></span></div>

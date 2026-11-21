@@ -206,6 +206,13 @@ function getAlternative(mode, exercise, selected) {
     ?? null
 }
 
+export function getExerciseAlternatives(mode, exercise, selected) {
+  const alternatives = (mode === 'gym' ? GYM_ALTERNATIVES : HOME_ALTERNATIVES)[getExerciseKey(mode, exercise)] ?? []
+  const compatible = alternatives.filter((alternative) => meetsRequirements(alternative.equipment, selected))
+  const safeBodyweight = alternatives.filter((alternative) => meetsRequirements(alternative.equipment, [NO_EQUIPMENT]))
+  return [...new Map([...compatible, ...safeBodyweight].map((alternative) => [alternative.name, alternative])).values()]
+}
+
 export function filterWorkoutPlan(mode, plan, selected) {
   const exercises = []
   const alternatives = []

@@ -127,6 +127,16 @@ export function parseExerciseDuration(duration) {
   return Number.isFinite(minutes) && minutes > 0 ? minutes : null
 }
 
+function estimateExerciseDuration(exercise) {
+  const explicit = parseExerciseDuration(exercise?.duration)
+  if (explicit !== null) return explicit
+  const sets = Number.isFinite(Number(exercise?.sets)) && Number(exercise.sets) > 0 ? Number(exercise.sets) : 1
+  const repsMatch = String(exercise?.reps ?? '').match(/(\d+(?:\.\d+)?)/)
+  const reps = repsMatch ? Number(repsMatch[1]) : 8
+  const secondsPerRep = /second|hold/i.test(String(exercise?.reps ?? '')) ? 1 : 3
+  return Math.max(2, sets * (Math.min(reps, 30) * secondsPerRep / 60 + 1))
+}
+
 function getWorkoutActivityType(name, mode, category) {
   const activityName = name.toLowerCase()
   if (/walk|march/.test(activityName)) return 'Walking'
@@ -140,7 +150,39 @@ function getWorkoutActivityType(name, mode, category) {
   return mode === 'home' ? 'Home Workouts' : 'Other'
 }
 
-export function getCompletedWorkoutCalorieActivities(workoutProgress, weightKg) {
+export function estimateExerciseCalories({ exercise, mode = 'gym', category = '', weightKg }) {
+  if (!exercise || !isValidBodyWeight(weightKg)) return null
+  const durationMinutes = estimateExerciseDuration(exercise)
+  const activity = getWorkoutActivityType(exercise.name ?? '', mode, category)
+  const intensity = /hiit|sprint|burpee|jump/i.test(exercise.name ?? '') ? 'High' : /stretch|mobility|yoga/i.test(exercise.name ?? '') ? 'Low' : 'Moderate'
+  return estimateCaloriesBurned({ activity, durationMinutes, intensity, weightKg })
+}
+
+export function getWorkoutCompletionCalorieActivities(records, weightKg) {
+  if (!Array.isArray(records)) return []
+  return records.map((record) => {
+    const exercise = record.exercise ?? record
+    const savedWeight = Object.hasOwn(record, 'weightKg') ? record.weightKg : weightKg
+    const durationMinutes = estimateExerciseDuration(exercise)
+    const activity = getWorkoutActivityType(exercise.name ?? record.exerciseName ?? '', record.mode, record.category)
+    const intensity = /hiit|sprint|burpee|jump/i.test(exercise.name ?? '') ? 'High' : /stretch|mobility|yoga/i.test(exercise.name ?? '') ? 'Low' : 'Moderate'
+    return {
+      id: record.id,
+      activity,
+      activityName: record.exerciseName ?? exercise.name,
+      durationMinutes,
+      intensity,
+      date: record.date,
+      weightKg: isValidBodyWeight(savedWeight) ? savedWeight : null,
+      caloriesKcal: isValidBodyWeight(savedWeight)
+        ? estimateCaloriesBurned({ activity, durationMinutes, intensity, weightKg: savedWeight })
+        : null,
+      source: 'workout',
+    }
+  }).filter(isCalorieActivity)
+}
+
+export function getCompletedWorkoutCalorieActivities(workoutProgress, weightKg, includeUntimed = false) {
   if (!isValidBodyWeight(weightKg)) return []
 
   return getCompletedWorkoutSessions(workoutProgress).flatMap((session) => {
@@ -151,7 +193,7 @@ export function getCompletedWorkoutCalorieActivities(workoutProgress, weightKg) 
 
     const date = getWeekDateKeys(session.weekId)[dayIndex]
     return plan.exercises.flatMap((exercise) => {
-      const durationMinutes = parseExerciseDuration(exercise.duration)
+      const durationMinutes = parseExerciseDuration(exercise.duration) ?? (includeUntimed ? estimateExerciseDuration(exercise) : null)
       if (durationMinutes === null) return []
       const activity = getWorkoutActivityType(exercise.name, session.mode, plan.category ?? plan.focus)
       const intensity = 'Moderate'

@@ -124,6 +124,64 @@
   .mobile-nav a { display: grid; min-height: 48px; align-content: center; justify-items: center; gap: 4px; border-radius: 9px; color: #8a958d; font-size: 9px; }
   .mobile-nav a.active { color: #32724a; background: #f0f6f0; font-weight: 700; }
 }
+
+/* Personalized onboarding, exercise substitutions, and the compact calculator. */
+.profile-setup-page { min-height: 100vh; display: grid; place-items: center; padding: 32px 18px; background: var(--canvas); }
+.profile-setup-card { width: min(760px, 100%); padding: 34px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 18px 55px rgb(20 47 37 / 9%); }
+.profile-setup-card h1 { margin: 8px 0; color: var(--ink); font-size: clamp(26px, 4vw, 38px); letter-spacing: -1.4px; }
+.profile-setup-card .auth-subtitle { max-width: 600px; }
+.profile-setup-form { display: grid; gap: 22px; margin-top: 28px; }
+.profile-setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.profile-setup-grid label, .profile-setup-equipment legend { display: grid; gap: 7px; color: var(--muted); font-size: 11px; font-weight: 650; }
+.profile-setup-grid input, .profile-setup-grid select { width: 100%; min-height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--canvas); font: inherit; }
+.profile-required-label { margin-left: auto; color: #bd5b4b; font-size: 9px; font-weight: 500; }
+.profile-setup-equipment { padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.profile-setup-equipment legend { display: flex; align-items: center; gap: 6px; padding: 0 5px; }
+.profile-setup-equipment-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.profile-setup-equipment-grid button { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: var(--canvas); font-size: 10px; cursor: pointer; }
+.profile-setup-equipment-grid button.selected { border-color: #72ad83; color: #285f45; background: #e3f4e7; }
+.profile-setup-equipment-grid button span { width: 15px; height: 15px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; }
+.profile-setup-equipment small, .profile-setup-note { color: var(--muted); font-size: 10px; line-height: 1.55; }
+.profile-setup-note { margin: 20px 0 0; }
+.exercise-card-wrap { position: relative; }
+.exercise-alternative-note { margin: 7px 0 0; color: #9a6249; font-size: 10px; line-height: 1.45; }
+.exercise-replace-button { display: inline-flex; align-items: center; gap: 5px; margin-top: 13px; padding: 7px 9px; border: 1px solid #cfe2d3; border-radius: 7px; color: #2f7d5b; background: #f5fbf5; font-size: 9px; font-weight: 650; cursor: pointer; }
+.exercise-replacement-picker { display: grid; gap: 7px; margin: -7px 46px 14px 48px; padding: 12px; border: 1px solid #cfe2d3; border-radius: 9px; background: #f8fcf8; }
+.exercise-replacement-picker strong { color: var(--ink); font-size: 10px; }
+.exercise-replacement-picker button { padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--surface); text-align: left; font-size: 10px; cursor: pointer; }
+.exercise-replacement-picker button.selected { border-color: #72ad83; color: #285f45; background: #e3f4e7; }
+.exercise-replacement-picker .exercise-replacement-cancel { color: var(--muted); background: transparent; }
+.nutrition-calculator-page .nutrition-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.nutrition-calculator-notice { display: flex; align-items: flex-start; gap: 9px; margin: 18px 0; padding: 13px 15px; border: 1px solid #e0eadc; border-radius: 10px; color: #557060; background: #f7fbf5; font-size: 10px; line-height: 1.55; }
+.nutrition-calculator-notice svg { flex: 0 0 auto; color: #557c62; }
+.nutrition-calculator-notice p { margin: 0; }
+.nutrition-calculator-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr); gap: 18px; }
+.nutrition-calculator-form-panel, .nutrition-results-panel { padding: 20px; }
+.nutrition-calculator-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 18px; }
+.nutrition-calculator-form label { display: grid; position: relative; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 650; }
+.nutrition-calculator-form input, .nutrition-calculator-form select { width: 100%; min-height: 40px; padding: 0 36px 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--canvas); font: inherit; }
+.nutrition-calculator-form label small { position: absolute; right: 10px; bottom: 12px; color: var(--muted); font-size: 9px; font-weight: 500; }
+.nutrition-calculator-form label:nth-child(n+4) small { display: none; }
+.nutrition-calculator-profile-note, .nutrition-method-note { display: flex; align-items: center; gap: 5px; margin: 17px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.nutrition-result-list { display: grid; gap: 0; margin: 18px 0 0; }
+.nutrition-result-list div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.nutrition-result-list dt { color: var(--muted); font-size: 10px; }
+.nutrition-result-list dd { margin: 0; color: var(--ink); font-size: 17px; font-weight: 700; text-align: right; }
+.nutrition-result-list .highlight { margin: 8px -10px 0; padding: 14px 10px; border: 1px solid #cfe2d3; border-radius: 9px; background: #f3faf2; }
+.nutrition-goal-note { margin: 15px 0 0; color: #2f7d5b; font-size: 10px; font-weight: 600; }
+.calorie-consumed-form { display: grid; grid-template-columns: 1.4fr .7fr auto; gap: 8px; align-items: end; margin: 17px 0; }
+.calorie-consumed-form label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 650; }
+.calorie-consumed-form input { min-height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--canvas); font-size: 10px; }
+
+@media (max-width: 760px) {
+  .profile-setup-card { padding: 24px 18px; }
+  .profile-setup-grid, .nutrition-calculator-form, .nutrition-calculator-grid { grid-template-columns: 1fr; }
+  .profile-setup-equipment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nutrition-calculator-page .nutrition-page-heading { display: block; }
+  .nutrition-calculator-page .date-pill { display: inline-flex; margin-top: 12px; font-size: 10px; }
+  .calorie-consumed-form { grid-template-columns: 1fr 1fr; }
+  .calorie-consumed-form button { grid-column: 1 / -1; }
+}
 @media (max-width: 380px) {
   .page-content { padding-right: 13px; padding-left: 13px; }
   .stat-card { padding: 11px; }
@@ -298,9 +356,8 @@
 .exercise-details p { max-width: 670px; margin: 5px 0 0; color: #849087; font-size: 10px; line-height: 1.55; }
 .exercise-meta { display: flex; flex-wrap: wrap; gap: 7px 14px; margin-top: 9px; }
 .exercise-meta span { display: inline-flex; align-items: center; gap: 5px; color: #52745c; font-size: 9px; font-weight: 600; }
-.exercise-check { display: grid; width: 29px; height: 29px; flex: 0 0 auto; place-items: center; border: 1px solid #dfe7df; border-radius: 8px; color: #fff; background: #fff; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+.exercise-check { display: inline-flex; width: auto; min-width: 105px; min-height: 29px; height: auto; flex: 0 0 auto; align-items: center; justify-content: center; gap: 5px; padding: 7px 8px; border: 1px solid #dfe7df; border-radius: 8px; color: #52745c; background: #fff; font-size: 9px; font-weight: 650; line-height: 1; white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
 .exercise-check:hover { border-color: #71a37b; transform: scale(1.04); }
-.exercise-check > span { width: 11px; height: 11px; border-radius: 3px; background: #f5f7f5; }
 .exercise-check[aria-pressed="true"] { border-color: #3d8054; background: #3d8054; }
 .rest-day-card { display: flex; align-items: flex-start; gap: 12px; padding: 18px; border: 1px solid #e6eee6; border-radius: 11px; background: #f7faf7; }
 .rest-day-card > span { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 10px; color: #4f865d; background: #e8f2e9; }
@@ -1902,6 +1959,146 @@ html[data-theme='dark'] body:not(:has(.habits-page)) .nutrition-page .panel { bo
 html[data-theme='dark'] body:not(:has(.habits-page)) .workout-page .panel { border-color: #5a3e46; }
 html[data-theme='dark'] body:not(:has(.habits-page)) .progress-page .panel { border-color: #315552; }
 html[data-theme='dark'] body:not(:has(.habits-page)) .membership-page .panel { border-color: #594f3c; }
+
+/* Calm dark theme: keep surfaces close in value and reserve sage for actions and focus. */
+html[data-theme='dark'] body,
+html[data-theme='dark'] body:has(.habits-page),
+html[data-theme='dark'] .app-shell,
+html[data-theme='dark'] .auth-page,
+html[data-theme='dark'] .profile-setup-page { color: var(--ink); background: var(--canvas); }
+
+html[data-theme='dark'] body:not(:has(.habits-page)) .sidebar {
+  background: linear-gradient(180deg, #1d2d25 0%, #17241e 70%, #142019 100%);
+  box-shadow: 12px 0 30px rgb(0 0 0 / 16%);
+}
+html[data-theme='dark'] body:not(:has(.habits-page)) .topbar,
+html[data-theme='dark'] .auth-topbar,
+html[data-theme='dark'] .mobile-nav {
+  border-color: var(--line);
+  background: rgb(27 36 32 / 92%);
+}
+
+html[data-theme='dark'] .panel,
+html[data-theme='dark'] .stat-card,
+html[data-theme='dark'] .workout-card,
+html[data-theme='dark'] .water-card,
+html[data-theme='dark'] .auth-card,
+html[data-theme='dark'] .profile-setup-card,
+html[data-theme='dark'] .progress-metric-card,
+html[data-theme='dark'] .exercise-card,
+html[data-theme='dark'] .exercise-video-card,
+html[data-theme='dark'] .fitness-profile-item,
+html[data-theme='dark'] .fitness-profile-identity {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+html[data-theme='dark'] .workout-day-button,
+html[data-theme='dark'] .diet-meal-card,
+html[data-theme='dark'] .habit-row,
+html[data-theme='dark'] .nutrition-total-card,
+html[data-theme='dark'] .nutrition-saved-recipe,
+html[data-theme='dark'] .store-product-card,
+html[data-theme='dark'] .exercise-replacement-picker {
+  border-color: var(--line);
+  background: var(--surface-soft);
+}
+html[data-theme='dark'] .workout-day-button.selected,
+html[data-theme='dark'] .exercise-card.completed,
+html[data-theme='dark'] .diet-meal-card.selected,
+html[data-theme='dark'] .habit-row.completed {
+  border-color: #4c6755;
+  background: #24352b;
+}
+
+html[data-theme='dark'] .icon-button,
+html[data-theme='dark'] .icon-status,
+html[data-theme='dark'] .date-pill,
+html[data-theme='dark'] .range-select,
+html[data-theme='dark'] .workout-mode-toggle,
+html[data-theme='dark'] .workout-difficulty-toggle,
+html[data-theme='dark'] .profile-dialog,
+html[data-theme='dark'] .profile-cancel,
+html[data-theme='dark'] .tracker-secondary-button,
+html[data-theme='dark'] .secondary-button,
+html[data-theme='dark'] .exercise-check,
+html[data-theme='dark'] .exercise-replace-button,
+html[data-theme='dark'] .exercise-replacement-picker button,
+html[data-theme='dark'] .nutrition-icon-button,
+html[data-theme='dark'] .nutrition-small-button,
+html[data-theme='dark'] .nutrition-secondary-button {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--surface);
+}
+html[data-theme='dark'] input,
+html[data-theme='dark'] select,
+html[data-theme='dark'] textarea,
+html[data-theme='dark'] .exercise-video-search,
+html[data-theme='dark'] .exercise-video-filters {
+  border-color: var(--line);
+  color: var(--ink);
+  background: #17201b;
+}
+html[data-theme='dark'] input::placeholder,
+html[data-theme='dark'] textarea::placeholder { color: #8f9d94; }
+html[data-theme='dark'] .workout-mode-toggle button.active,
+html[data-theme='dark'] .workout-difficulty-toggle button.active,
+html[data-theme='dark'] .exercise-check[aria-pressed='true'],
+html[data-theme='dark'] .primary-button,
+html[data-theme='dark'] .auth-submit,
+html[data-theme='dark'] .nutrition-primary-button,
+html[data-theme='dark'] .pricing-primary-action {
+  color: #f2f7f3;
+  background: #5f9570;
+}
+html[data-theme='dark'] .workout-mode-toggle button.active:hover,
+html[data-theme='dark'] .workout-difficulty-toggle button.active:hover,
+html[data-theme='dark'] .primary-button:hover,
+html[data-theme='dark'] .auth-submit:hover,
+html[data-theme='dark'] .nutrition-primary-button:hover {
+  background: #70a981;
+}
+html[data-theme='dark'] .exercise-check:not([aria-pressed='true']):hover,
+html[data-theme='dark'] .exercise-replace-button:hover,
+html[data-theme='dark'] .secondary-button:hover,
+html[data-theme='dark'] .icon-button:hover {
+  border-color: #668573;
+  background: #26382d;
+}
+html[data-theme='dark'] .exercise-video-link {
+  border-color: #405849;
+  color: #b6d8bd;
+  background: #24352b;
+}
+html[data-theme='dark'] .exercise-video-link:hover { border-color: #668573; background: #2b4233; }
+html[data-theme='dark'] .mobile-nav a.active,
+html[data-theme='dark'] .mobile-more-links a.active { color: #b6d8bd; background: #26382d; }
+html[data-theme='dark'] .mobile-more-panel { border-color: var(--line); background: var(--surface); }
+html[data-theme='dark'] .workout-progress-track,
+html[data-theme='dark'] .tracker-progress-track,
+html[data-theme='dark'] .water-track,
+html[data-theme='dark'] .activity-chart-column { background: #2b3930; }
+html[data-theme='dark'] .workout-progress-track span,
+html[data-theme='dark'] .tracker-progress-track > span,
+html[data-theme='dark'] .water-progress-fill,
+html[data-theme='dark'] .habit-progress-fill { background: #6d9f7a; }
+html[data-theme='dark'] body:not(:has(.habits-page)) .workout-page .panel,
+html[data-theme='dark'] body:not(:has(.habits-page)) .diet-page .panel,
+html[data-theme='dark'] body:not(:has(.habits-page)) .nutrition-page .panel,
+html[data-theme='dark'] body:not(:has(.habits-page)) .progress-page .panel,
+html[data-theme='dark'] body:not(:has(.habits-page)) .membership-page .panel { border-color: var(--line); background: var(--surface); }
+html[data-theme='dark'] body:not(:has(.habits-page)) .workout-page .workout-session-icon,
+html[data-theme='dark'] body:not(:has(.habits-page)) .stat-icon,
+html[data-theme='dark'] body:not(:has(.habits-page)) .summary-icon,
+html[data-theme='dark'] body:not(:has(.habits-page)) .progress-panel-icon,
+html[data-theme='dark'] body:not(:has(.habits-page)) .nutrition-panel-icon { color: #a9cdb0; background: #26382d; }
+html[data-theme='dark'] .workout-page .workout-mode-toggle button:hover,
+html[data-theme='dark'] .workout-page .workout-difficulty-toggle button:hover { color: #b6d8bd; background: #26382d; }
+html[data-theme='dark'] body:not(:has(.habits-page)) .workout-page .workout-week-badge,
+html[data-theme='dark'] body:not(:has(.habits-page)) .workout-page .workout-category-badge.strength { color: #b6d8bd; background: #26382d; }
+html[data-theme='dark'] .exercise-alternative-note { color: #c4a77f; }
+html[data-theme='dark'] .exercise-replacement-picker button.selected { border-color: #668573; color: #b6d8bd; background: #26382d; }
 
 /* Forest Green + Sage + Mint theme layer. Water Intake remains excluded by
    the .habits-page guard above and retains its existing visual contract. */

@@ -3,13 +3,15 @@ export const WORKOUT_PROGRESS_STORAGE_KEY = 'fitlife.workouts.v1'
 
 export const DEFAULT_PROFILE = {
   name: 'Alex Kumar',
-  age: 28,
-  height: 172,
-  weight: 70,
+  age: null,
+  height: null,
+  weight: null,
   weightConfirmed: false,
   gender: '',
-  goal: 'Strength',
-  fitnessLevel: 'Beginner',
+  goal: '',
+  fitnessLevel: '',
+  profileSetupComplete: false,
+  availableEquipment: [],
   dietPreference: '',
   smokingStatus: '',
   smartwatchAvailability: '',
@@ -21,17 +23,18 @@ export const DEFAULT_PROFILE = {
 export const FITNESS_GOALS = [
   'Weight Loss',
   'Muscle Gain',
-  'Fat Loss',
-  'Strength',
+  'Maintain Fitness',
   'General Fitness',
-  'Endurance',
 ]
 
-export const DASHBOARD_STATS = [
-  { label: 'Calories burned', value: '428', unit: 'kcal', note: '8% above your daily average', trend: 'up' },
-  { label: 'Active minutes', value: '42', unit: 'min', note: 'Great pace for today', trend: 'up' },
-  { label: 'Steps today', value: '6,240', unit: 'steps', note: '1,760 steps to your goal', trend: 'down' },
-  { label: 'Heart rate', value: '72', unit: 'bpm', note: 'Resting · within your range', trend: 'steady' },
+export const AVAILABLE_EQUIPMENT = [
+  { id: 'no-equipment', label: 'No equipment' },
+  { id: 'dumbbells', label: 'Dumbbells' },
+  { id: 'resistance-bands', label: 'Resistance bands' },
+  { id: 'barbell', label: 'Barbell' },
+  { id: 'bench', label: 'Bench' },
+  { id: 'pull-up-bar', label: 'Pull-up bar' },
+  { id: 'full-gym', label: 'Full gym equipment' },
 ]
 
 export const FITNESS_LEVELS = ['Beginner', 'Intermediate', 'Advanced']
@@ -93,6 +96,10 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
     gender: normalizeOptionalChoice(saved.gender, GENDER_OPTIONS),
     goal: Object.hasOwn(LEGACY_FITNESS_GOALS, savedGoal) ? LEGACY_FITNESS_GOALS[savedGoal] : savedGoal,
     fitnessLevel: normalizeOptionalChoice(saved.fitnessLevel, FITNESS_LEVELS, DEFAULT_PROFILE.fitnessLevel),
+    profileSetupComplete: saved.profileSetupComplete === true,
+    availableEquipment: Array.isArray(saved.availableEquipment)
+      ? [...new Set(saved.availableEquipment.filter((id) => AVAILABLE_EQUIPMENT.some((item) => item.id === id)))]
+      : [],
     dietPreference: normalizeOptionalChoice(saved.dietPreference, DIET_PREFERENCES),
     smokingStatus: normalizeOptionalChoice(saved.smokingStatus, SMOKING_STATUSES),
     smartwatchAvailability: normalizeOptionalChoice(
@@ -114,9 +121,22 @@ export function normalizeProfile(saved, userName = DEFAULT_PROFILE.name) {
     && Number(saved.weight) >= 30
     && Number(saved.weight) <= 350
 
+  const hasValidSavedHeight = Number.isFinite(Number(saved.height))
+    && Number(saved.height) >= 100
+    && Number(saved.height) <= 250
+  const isLegacySampleProfile = saved.profileSetupComplete !== true
+    && saved.weightConfirmed !== true
+    && Number(saved.height) === 172
+    && Number(saved.weight) === 70
+    && Number(saved.age) === 28
+
   return {
     ...profile,
-    weightConfirmed: hasValidSavedWeight && (typeof saved.weightConfirmed === 'boolean'
+    height: isLegacySampleProfile ? null : profile.height,
+    weight: isLegacySampleProfile ? null : profile.weight,
+    age: isLegacySampleProfile ? null : profile.age,
+    profileSetupComplete: !isLegacySampleProfile && (profile.profileSetupComplete || (hasValidSavedHeight && hasValidSavedWeight && saved.weightConfirmed !== false)),
+    weightConfirmed: !isLegacySampleProfile && hasValidSavedWeight && (typeof saved.weightConfirmed === 'boolean'
       ? saved.weightConfirmed
       : !isSampleProfile),
   }

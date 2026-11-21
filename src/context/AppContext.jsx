@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DASHBOARD_STATS, normalizeProfile, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
+import { normalizeProfile, PROFILE_STORAGE_KEY, WORKOUT_PROGRESS_STORAGE_KEY } from '../data/profile.js'
 import { GYM_DIFFICULTIES } from '../data/workouts.js'
-import { EQUIPMENT_PREFERENCES_STORAGE_KEY, normalizeEquipmentPreferences } from '../data/equipment.js'
+import { EQUIPMENT_OPTIONS, EQUIPMENT_PREFERENCES_STORAGE_KEY, NO_EQUIPMENT, normalizeEquipmentPreferences } from '../data/equipment.js'
 import {
   CALORIE_ACTIVITIES_STORAGE_KEY,
   getCompletedWorkoutCalorieActivities,
+  getWorkoutCompletionCalorieActivities,
   getProfileCalorieWeight,
   isCalorieActivity,
   mergeCalorieActivities,
@@ -18,6 +19,7 @@ import {
 } from '../data/fitnessTracker.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
 import { saveNewlyEarnedBadges } from '../utils/progress.js'
+import { getWeekDateKeys } from '../utils/progress.js'
 import AppContext from './appContext.js'
 
 function loadProfile(userName) {
@@ -56,11 +58,41 @@ function loadWorkoutProgress() {
   }
 }
 
+export const WORKOUT_COMPLETIONS_STORAGE_KEY = 'fitlife.workout-completions.v1'
+export const WORKOUT_REPLACEMENTS_STORAGE_KEY = 'fitlife.workout-replacements.v1'
+
+function loadWorkoutCompletions() {
+  const saved = readLocalJson(WORKOUT_COMPLETIONS_STORAGE_KEY, [])
+  return Array.isArray(saved) ? saved.filter((record) => record && typeof record.id === 'string' && record.completedAt) : []
+}
+
+function loadWorkoutReplacements() {
+  const saved = readLocalJson(WORKOUT_REPLACEMENTS_STORAGE_KEY, {})
+  return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {}
+}
+
+function profileEquipmentPreferences(selected = []) {
+  if (selected.includes('full-gym')) return {
+    gym: EQUIPMENT_OPTIONS.gym.map(({ id }) => id).filter((id) => id !== NO_EQUIPMENT),
+    home: EQUIPMENT_OPTIONS.home.map(({ id }) => id).filter((id) => id !== NO_EQUIPMENT),
+  }
+  const gym = []
+  const home = []
+  if (selected.includes('dumbbells')) { gym.push('dumbbells'); home.push('adjustable-dumbbells') }
+  if (selected.includes('resistance-bands')) { gym.push('resistance-bands'); home.push('resistance-bands') }
+  if (selected.includes('barbell')) gym.push('barbells', 'weight-plates')
+  if (selected.includes('bench')) { gym.push('bench'); home.push('bench') }
+  if (selected.includes('pull-up-bar')) home.push('pull-up-bar')
+  return { gym: gym.length ? gym : [NO_EQUIPMENT], home: home.length ? home : [NO_EQUIPMENT] }
+}
+
 export function AppProvider({ children, user }) {
   const [profile, setProfile] = useState(() => loadProfile(user.name))
   const initialProfile = useRef(profile)
   const [profileStorageError, setProfileStorageError] = useState(false)
   const [workoutProgress, setWorkoutProgress] = useState(loadWorkoutProgress)
+  const [workoutCompletions, setWorkoutCompletions] = useState(loadWorkoutCompletions)
+  const [workoutReplacements, setWorkoutReplacements] = useState(loadWorkoutReplacements)
   const [savedCalorieActivities, setSavedCalorieActivities] = useState(() => (
     normalizeCalorieActivities(readLocalJson(CALORIE_ACTIVITIES_STORAGE_KEY, []))
   ))
@@ -73,11 +105,13 @@ export function AppProvider({ children, user }) {
     normalizeEquipmentPreferences(readLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, null))
   ))
   const [equipmentStorageError, setEquipmentStorageError] = useState(false)
-  const dashboardStats = DASHBOARD_STATS
   const baseCalorieActivities = useMemo(() => mergeCalorieActivities(
     savedCalorieActivities,
-    getCompletedWorkoutCalorieActivities(workoutProgress, getProfileCalorieWeight(profile)),
-  ), [profile, savedCalorieActivities, workoutProgress])
+    [
+      ...getWorkoutCompletionCalorieActivities(workoutCompletions, getProfileCalorieWeight(profile)),
+      ...getCompletedWorkoutCalorieActivities(workoutProgress, getProfileCalorieWeight(profile), true),
+    ],
+  ), [profile, savedCalorieActivities, workoutCompletions, workoutProgress])
   const calorieActivities = useMemo(() => mergeCalorieActivities(
     baseCalorieActivities,
     getFitnessTrackerCalorieActivities(fitnessTrackerRecords),
@@ -93,6 +127,14 @@ export function AppProvider({ children, user }) {
   useEffect(() => {
     writeLocalJson(WORKOUT_PROGRESS_STORAGE_KEY, workoutProgress)
   }, [workoutProgress])
+
+  useEffect(() => {
+    writeLocalJson(WORKOUT_COMPLETIONS_STORAGE_KEY, workoutCompletions)
+  }, [workoutCompletions])
+
+  useEffect(() => {
+    writeLocalJson(WORKOUT_REPLACEMENTS_STORAGE_KEY, workoutReplacements)
+  }, [workoutReplacements])
 
   useEffect(() => {
     saveNewlyEarnedBadges({ workoutProgress })
@@ -152,6 +194,11 @@ export function AppProvider({ children, user }) {
     }
 
     setProfile(updatedProfile)
+    if (Array.isArray(nextProfile.availableEquipment)) {
+      const preferences = profileEquipmentPreferences(nextProfile.availableEquipment)
+      writeLocalJson(EQUIPMENT_PREFERENCES_STORAGE_KEY, preferences)
+      setEquipmentPreferences(preferences)
+    }
     setProfileStorageError(false)
     return true
   }, [profile, user.name])
@@ -168,44 +215,76 @@ export function AppProvider({ children, user }) {
     return true
   }, [])
 
-  const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId, difficulty = 'Beginner') => {
+  const toggleWorkoutExercise = useCallback((mode, week, day, exerciseId, difficulty = 'Beginner', exerciseDetails = null) => {
+    const progressKey = mode === 'gym' ? difficulty : mode
+    const currentWeeks = workoutProgress[mode]?.[progressKey] ?? {}
+    const currentWeek = currentWeeks[week] ?? {}
+    const currentDay = currentWeek[day] ?? {}
+    const wasCompleted = currentDay[exerciseId] === true
+    const completionId = `workout:${mode}:${mode === 'gym' ? difficulty : 'home'}:${week}:${day}:${exerciseId}`
+
     setWorkoutProgress((current) => {
-      const progressKey = mode === 'gym' ? difficulty : mode
-      const currentWeeks = current[mode]?.[progressKey] ?? {}
-      const currentWeek = currentWeeks[week] ?? {}
-      const currentDay = currentWeek[day] ?? {}
-      const nextWeeks = {
-        ...currentWeeks,
+      const nextWeeks = current[mode]?.[progressKey] ?? {}
+      const nextWeek = nextWeeks[week] ?? {}
+      const nextDay = { ...(nextWeek[day] ?? {}) }
+      if (wasCompleted) delete nextDay[exerciseId]
+      else nextDay[exerciseId] = true
+      const updatedWeeks = {
+        ...nextWeeks,
         [week]: {
-          ...currentWeek,
-          [day]: { ...currentDay, [exerciseId]: !currentDay[exerciseId] },
+          ...nextWeek,
+          [day]: nextDay,
         },
       }
 
       if (mode === 'gym') {
         return {
           ...current,
-          gym: { ...current.gym, [progressKey]: nextWeeks },
+          gym: { ...current.gym, [progressKey]: updatedWeeks },
         }
       }
 
       return {
         ...current,
-        [mode]: nextWeeks,
+        [mode]: updatedWeeks,
       }
     })
+
+    setWorkoutCompletions((current) => wasCompleted
+      ? current.filter(({ id }) => id !== completionId)
+      : current.some(({ id }) => id === completionId)
+        ? current
+        : [...current, {
+        id: completionId,
+        mode,
+        difficulty,
+        weekId: week,
+        dayId: day,
+        date: getWeekDateKeys(week)[['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].indexOf(day)] ?? week,
+        exerciseName: exerciseDetails?.name ?? exerciseId,
+        exercise: exerciseDetails ?? { id: exerciseId, name: exerciseId, sets: 1, reps: '8' },
+        category: exerciseDetails?.category ?? '',
+        weightKg: getProfileCalorieWeight(profile),
+        completedAt: new Date().toISOString(),
+      }])
+  }, [profile, workoutProgress])
+
+  const saveWorkoutReplacement = useCallback((key, replacement) => {
+    setWorkoutReplacements((current) => ({ ...current, [key]: replacement }))
   }, [])
 
   const value = useMemo(() => ({
     profile,
     updateProfile,
     profileStorageError,
-    dashboardStats,
     equipmentPreferences,
     updateEquipmentPreferences,
     equipmentStorageError,
     workoutProgress,
+    workoutCompletions,
+    workoutReplacements,
     toggleWorkoutExercise,
+    saveWorkoutReplacement,
     calorieActivities,
     addCalorieActivity,
     updateCalorieActivityDuration,
@@ -213,7 +292,7 @@ export function AppProvider({ children, user }) {
     fitnessTrackerRecords,
     saveFitnessTrackerRecords,
     fitnessTrackerStorageError,
-  }), [profile, updateProfile, profileStorageError, dashboardStats, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, toggleWorkoutExercise, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError, fitnessTrackerRecords, saveFitnessTrackerRecords, fitnessTrackerStorageError])
+  }), [profile, updateProfile, profileStorageError, equipmentPreferences, updateEquipmentPreferences, equipmentStorageError, workoutProgress, workoutCompletions, workoutReplacements, toggleWorkoutExercise, saveWorkoutReplacement, calorieActivities, addCalorieActivity, updateCalorieActivityDuration, calorieStorageError, fitnessTrackerRecords, saveFitnessTrackerRecords, fitnessTrackerStorageError])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Activity, Check, Info, Save, Scale, Target, UserRound } from 'lucide-react'
 import { useAppData } from '../hooks/useAppData.js'
+import { AVAILABLE_EQUIPMENT } from '../data/profile.js'
 import ProfileAvatar from '../components/ProfileAvatar.jsx'
 import { calculateBMI, getBMICategory } from '../utils/bmi.js'
 
@@ -134,15 +135,19 @@ export default function BmiProfilePage() {
           </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><UserRound size={16} /></span>
-            <div><small>Age and gender</small><strong>{profile.age ?? 'Not provided'}{profile.age !== null ? ' years' : ''} · {profile.gender || 'Not provided'}</strong></div>
+            <div><small>Age and gender</small><strong>{profile.age ?? 'Not set'}{profile.age !== null ? ' years' : ''} · {profile.gender || 'Not set'}</strong></div>
           </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><Target size={16} /></span>
-            <div><small>Fitness goal</small><strong>{profile.goal || 'Not provided'}</strong></div>
+            <div><small>Fitness goal</small><strong>{profile.goal || 'Not set'}</strong></div>
           </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><Activity size={16} /></span>
-            <div><small>Fitness experience</small><strong>{profile.fitnessLevel || 'Not provided'}</strong></div>
+            <div><small>Fitness experience</small><strong>{profile.fitnessLevel || 'Not set'}</strong></div>
+          </div>
+          <div className="fitness-profile-item">
+            <span className="fitness-profile-icon"><Activity size={16} /></span>
+            <div><small>Available equipment</small><strong>{profile.availableEquipment?.length ? profile.availableEquipment.map((id) => AVAILABLE_EQUIPMENT.find((item) => item.id === id)?.label).filter(Boolean).join(', ') : 'No equipment selected'}</strong></div>
           </div>
           <div className="fitness-profile-item">
             <span className="fitness-profile-icon"><Activity size={16} /></span>

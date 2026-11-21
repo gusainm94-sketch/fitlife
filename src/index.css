@@ -48,27 +48,27 @@ a { color: inherit; text-decoration: none; }
 
 html[data-theme='dark'] {
   color-scheme: dark;
-  color: #f1f5ef;
-  background: #142f25;
-  --midnight: #142f25;
-  --forest: #142f25;
-  --forest-deep: #0d2119;
-  --electric: #a3d6b5;
-  --emerald: #a3d6b5;
-  --orange: #d7a16c;
-  --mint: #294f3e;
-  --sage: #b4c5ba;
-  --ink: #f1f5ef;
-  --muted: #9eada3;
-  --line: #365246;
-  --canvas: #142f25;
-  --surface: #202b25;
-  --shadow-card: 0 16px 36px rgb(0 0 0 / 24%);
-  --surface-soft: #1b3a2d;
-  --focus-ring: #a3d6b5;
+  color: #e7eee9;
+  background: #121916;
+  --midnight: #1b2a23;
+  --forest: #1b2a23;
+  --forest-deep: #101814;
+  --electric: #9bc4a6;
+  --emerald: #8fba9b;
+  --orange: #d0a77a;
+  --mint: #26382e;
+  --sage: #b0beb4;
+  --ink: #e7eee9;
+  --muted: #a4b0a8;
+  --line: #34433a;
+  --canvas: #121916;
+  --surface: #1b2420;
+  --shadow-card: 0 14px 34px rgb(0 0 0 / 22%);
+  --surface-soft: #202d26;
+  --focus-ring: #9bc4a6;
 }
 
-html[data-theme='dark'] ::selection { color: #e6eee8; background: #315a3d; }
+html[data-theme='dark'] ::selection { color: #edf4ef; background: #3a5a46; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

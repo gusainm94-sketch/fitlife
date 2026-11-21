@@ -1,4 +1,4 @@
-import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CircleUserRound, CreditCard, Calculator, Droplets, Dumbbell, Flame, House, Leaf, LogOut, MoreHorizontal, Moon, Music2, Sun, Trophy, Watch, X } from 'lucide-react'
+import { Activity, Bell, CalendarDays, ChartNoAxesCombined, CircleUserRound, Calculator, Droplets, Dumbbell, Flame, House, LogOut, MoreHorizontal, Moon, Sun, Watch, X } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
@@ -23,8 +23,7 @@ const navigationGroups = [
   {
     label: 'Nourish',
     items: [
-      { label: 'Nutrition', path: '/nutrition', icon: Leaf },
-      { label: 'Calculator', path: '/nutrition-calculator', icon: Calculator },
+      { label: 'Nutrition Calculator', path: '/nutrition-calculator', icon: Calculator },
     ],
   },
   {
@@ -33,16 +32,13 @@ const navigationGroups = [
       { label: 'Calories', path: '/calories', icon: Flame },
       { label: 'Fitness tracker', path: '/fitness-tracker', icon: Watch },
       { label: 'Progress', path: '/progress', icon: ChartNoAxesCombined },
-      { label: 'Water & habits', path: '/habits', icon: Droplets },
+      { label: 'Water Intake', path: '/habits', icon: Droplets },
     ],
   },
   {
     label: 'More',
     items: [
       { label: 'BMI & profile', path: '/bmi-profile', icon: CircleUserRound },
-      { label: 'Music', path: '/music', icon: Music2 },
-      { label: 'Rewards', path: '/rewards', icon: Trophy },
-      { label: 'Membership', path: '/membership', icon: CreditCard },
     ],
   },
 ]

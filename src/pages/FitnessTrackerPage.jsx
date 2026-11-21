@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { Link } from 'react-router-dom'
 import { useAppData } from '../hooks/useAppData.js'
 import { getProfileCalorieWeight } from '../data/calories.js'
-import { FITNESS_MEASUREMENTS, createFitnessTrackerRecord, getFitnessTrackerDailySummary, getFitnessTrackerHistory, isFitnessTrackerRecord, removeFitnessTrackerRecord } from '../data/fitnessTracker.js'
+import { FITNESS_MEASUREMENTS, createFitnessTrackerRecord, getFitnessTrackerDailySummary, getFitnessTrackerHistory, isFitnessTrackerRecord } from '../data/fitnessTracker.js'
 import { RUNNING_SESSIONS_STORAGE_KEY, calculateRunningMetrics, estimateRunningCalories, formatRunningDuration, formatRunningPace, haversineDistanceKm, normalizeRunningSessions } from '../data/running.js'
 import { formatDateKey, getTodayKey } from '../utils/date.js'
 import { readLocalJson, writeLocalJson } from '../utils/localStorage.js'
@@ -57,7 +57,7 @@ function HistoryChart({ history }) {
   )
 }
 
-function RecordForm({ records, selectedDate, onSave, onDelete, saveError }) {
+export function RecordForm({ records, selectedDate, onSave, onDelete, saveError }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [date, setDate] = useState(selectedDate)
   const [editingId, setEditingId] = useState('')
@@ -377,19 +377,10 @@ function RunningTracker({ profile }) {
 }
 
 export default function FitnessTrackerPage() {
-  const { profile, fitnessTrackerRecords, saveFitnessTrackerRecords, fitnessTrackerStorageError } = useAppData()
+  const { profile, fitnessTrackerRecords } = useAppData()
   const [selectedDate, setSelectedDate] = useState(getTodayKey)
   const summary = getFitnessTrackerDailySummary(fitnessTrackerRecords, selectedDate)
   const history = getFitnessTrackerHistory(fitnessTrackerRecords)
-  const saveRecord = (record) => {
-    const next = fitnessTrackerRecords.some(({ id }) => id === record.id)
-      ? fitnessTrackerRecords.map((item) => item.id === record.id ? record : item)
-      : [...fitnessTrackerRecords, record]
-    return saveFitnessTrackerRecords(next)
-  }
-  const deleteRecord = (recordId) => saveFitnessTrackerRecords(
-    removeFitnessTrackerRecord(fitnessTrackerRecords, recordId),
-  )
 
   return (
     <div className="page-content fitness-page">
@@ -416,7 +407,6 @@ export default function FitnessTrackerPage() {
       </section>
 
       <div className="fitness-content-grid">
-        <RecordForm key={selectedDate} records={fitnessTrackerRecords} selectedDate={selectedDate} onSave={saveRecord} onDelete={deleteRecord} saveError={fitnessTrackerStorageError} />
         <HistoryChart history={history} />
       </div>
     </div>
